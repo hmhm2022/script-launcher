@@ -1,0 +1,35 @@
+# Dependencies - 忽略node_modules以提高性能
+node_modules/
+
+# Build outputs - 忽略构建产物
+dist/
+build/
+out/
+
+# Logs - 忽略日志文件
+*.log
+logs/
+
+# Temporary files - 忽略临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# OS files - 忽略系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files - 忽略其他IDE配置
+.vscode/
+.idea/
+
+# Memory bank - 保留memory bank用于AI上下文
+# memory-bank/
+
+# Example scripts - 保留示例脚本用于参考
+# example_scripts/
+
+# Application data - 保留应用数据用于开发
+# app/data/ 

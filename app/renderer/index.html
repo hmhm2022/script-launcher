@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脚本管理器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部工具栏 -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1 class="app-title">
+                    <span class="app-icon">⚡</span>
+                    脚本管理器
+                </h1>
+                <span class="version-info">v1.0.0</span>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="搜索脚本..." id="search-input">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn btn-primary" id="add-script-btn">
+                    <span class="btn-icon">+</span>
+                    添加脚本
+                </button>
+                <button class="btn btn-secondary" id="refresh-btn" title="刷新">
+                    <span class="btn-icon">↻</span>
+                </button>
+                <button class="btn btn-secondary" id="settings-btn" title="设置">
+                    <span class="btn-icon">⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 分类标签栏 -->
+        <nav class="category-nav">
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="all">
+                    <span class="tab-icon">📋</span>
+                    全部脚本
+                    <span class="tab-count" id="count-all">0</span>
+                </button>
+                <button class="category-tab" data-category="python">
+                    <span class="tab-icon">🐍</span>
+                    Python
+                    <span class="tab-count" id="count-python">0</span>
+                </button>
+                <button class="category-tab" data-category="javascript">
+                    <span class="tab-icon">⚡</span>
+                    JavaScript
+                    <span class="tab-count" id="count-javascript">0</span>
+                </button>
+                <button class="category-tab" data-category="batch">
+                    <span class="tab-icon">🔧</span>
+                    批处理
+                    <span class="tab-count" id="count-batch">0</span>
+                </button>
+                <button class="category-tab" data-category="other">
+                    <span class="tab-icon">📄</span>
+                    其他
+                    <span class="tab-count" id="count-other">0</span>
+                </button>
+            </div>
+            
+            <div class="category-actions">
+                <select id="sort-select" class="sort-select">
+                    <option value="name">按名称排序</option>
+                    <option value="type">按类型排序</option>
+                    <option value="created">按创建时间</option>
+                    <option value="used">按使用频率</option>
+                </select>
+            </div>
+        </nav>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 脚本卡片网格 -->
+            <div class="scripts-grid" id="scripts-grid">
+                <!-- 欢迎屏幕 -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-content">
+                        <div class="welcome-icon">🚀</div>
+                        <h2>欢迎使用脚本管理器</h2>
+                        <p>点击"添加脚本"开始管理您的脚本，或者将脚本文件拖拽到这里。</p>
+                        <button class="btn btn-primary btn-large" id="welcome-add-btn">
+                            <span class="btn-icon">+</span>
+                            添加第一个脚本
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div class="loading-screen" id="loading-screen" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>正在加载脚本...</p>
+                </div>
+                
+                <!-- 空状态 -->
+                <div class="empty-screen" id="empty-screen" style="display: none;">
+                    <div class="empty-icon">📭</div>
+                    <h3>没有找到脚本</h3>
+                    <p>尝试调整搜索条件或添加新脚本。</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- 状态栏 -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="status-item">
+                    <span class="status-icon">📊</span>
+                    总计: <span id="total-scripts">0</span> 个脚本
+                </span>
+                <span class="status-item">
+                    <span class="status-icon">🔄</span>
+                    运行中: <span id="running-scripts">0</span> 个
+                </span>
+            </div>
+            
+            <div class="status-right">
+                <span class="status-item" id="last-update">
+                    最后更新: 从未
+                </span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 模态对话框 -->
+    <div id="modal-overlay" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">对话框</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div id="context-menu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" id="context-launch">
+            <span class="menu-icon">▶</span>
+            启动脚本
+        </div>
+        <div class="context-menu-item" id="context-edit">
+            <span class="menu-icon">✎</span>
+            编辑信息
+        </div>
+        <div class="context-menu-item" id="context-copy">
+            <span class="menu-icon">📋</span>
+            复制路径
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="context-delete">
+            <span class="menu-icon">🗑</span>
+            删除脚本
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- 加载脚本 -->
+    <script src="renderer.js"></script>
+</body>
+</html> 

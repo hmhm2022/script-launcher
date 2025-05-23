@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "示例Python脚本",
+    "type": "python",
+    "path": "./example_scripts/hello.py",
+    "description": "这是一个示例Python脚本，演示基本的输出功能"
+  },
+  {
+    "id": 2,
+    "name": "示例JavaScript脚本",
+    "type": "javascript",
+    "path": "./example_scripts/hello.js",
+    "description": "这是一个示例JavaScript脚本，演示基本的输出功能"
+  }
+]

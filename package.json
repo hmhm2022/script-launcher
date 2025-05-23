@@ -1,0 +1,44 @@
+{
+  "name": "scripts-manager-client",
+  "version": "1.0.0",
+  "description": "轻量级脚本管理器桌面客户端",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "dist": "electron-builder --publish=never"
+  },
+  "keywords": ["script", "manager", "desktop", "electron"],
+  "author": "Scripts Manager",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.3"
+  },
+  "build": {
+    "appId": "com.scriptsmanager.client",
+    "productName": "脚本管理器",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*",
+      "example_scripts/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "脚本管理器-${version}-portable.exe"
+    }
+  }
+} 
