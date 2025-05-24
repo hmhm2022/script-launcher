@@ -4,13 +4,42 @@
     "name": "示例Python脚本",
     "type": "python",
     "path": "./example_scripts/hello.py",
-    "description": "这是一个示例Python脚本，演示基本的输出功能"
+    "description": "这是一个示例Python脚本，演示基本的输出功能",
+    "updatedAt": "2025-05-24T09:00:16.402Z"
   },
   {
     "id": 2,
     "name": "示例JavaScript脚本",
     "type": "javascript",
     "path": "./example_scripts/hello.js",
-    "description": "这是一个示例JavaScript脚本，演示基本的输出功能"
+    "description": "这是一个示例JavaScript脚本，演示基本的输出功能",
+    "updatedAt": "2025-05-24T08:20:53.295Z"
+  },
+  {
+    "id": 3,
+    "name": "空货位",
+    "type": "python",
+    "path": "C:\\Users\\储运部\\Desktop\\空货位.py",
+    "description": "",
+    "createdAt": "2025-05-24T07:42:13.169Z",
+    "updatedAt": "2025-05-24T08:24:24.316Z"
+  },
+  {
+    "id": 4,
+    "name": "历史单据打印",
+    "type": "python",
+    "path": "C:\\Users\\储运部\\Desktop\\WMS 历史拣货单据打印.py",
+    "description": "",
+    "createdAt": "2025-05-24T07:42:46.057Z",
+    "updatedAt": "2025-05-24T08:16:54.943Z"
+  },
+  {
+    "id": 5,
+    "name": "客户地址查询",
+    "type": "python",
+    "path": "C:\\Users\\储运部\\Desktop\\客户地址查询.py",
+    "description": "",
+    "createdAt": "2025-05-24T08:17:37.212Z",
+    "updatedAt": "2025-05-24T08:20:47.466Z"
   }
 ]

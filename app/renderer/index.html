@@ -15,16 +15,16 @@
                     <span class="app-icon">⚡</span>
                     脚本管理器
                 </h1>
-                <span class="version-info">v1.0.0</span>
+                <span class="version-info">v1.1.1</span>
             </div>
-            
+
             <div class="header-center">
                 <div class="search-container">
                     <input type="text" class="search-input" placeholder="搜索脚本..." id="search-input">
                     <span class="search-icon">🔍</span>
                 </div>
             </div>
-            
+
             <div class="header-right">
                 <button class="btn btn-primary" id="add-script-btn">
                     <span class="btn-icon">+</span>
@@ -68,7 +68,7 @@
                     <span class="tab-count" id="count-other">0</span>
                 </button>
             </div>
-            
+
             <div class="category-actions">
                 <select id="sort-select" class="sort-select">
                     <option value="name">按名称排序</option>
@@ -95,13 +95,13 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- 加载状态 -->
                 <div class="loading-screen" id="loading-screen" style="display: none;">
                     <div class="loading-spinner"></div>
                     <p>正在加载脚本...</p>
                 </div>
-                
+
                 <!-- 空状态 -->
                 <div class="empty-screen" id="empty-screen" style="display: none;">
                     <div class="empty-icon">📭</div>
@@ -123,7 +123,7 @@
                     运行中: <span id="running-scripts">0</span> 个
                 </span>
             </div>
-            
+
             <div class="status-right">
                 <span class="status-item" id="last-update">
                     最后更新: 从未
@@ -172,4 +172,4 @@
     <!-- 加载脚本 -->
     <script src="renderer.js"></script>
 </body>
-</html> 
+</html>

@@ -11,7 +11,7 @@ class ScriptExecutor {
   async launchScript(scriptId, scriptData) {
     try {
       console.log(`准备启动脚本: ${scriptData.name} (${scriptId})`);
-      
+
       // 验证脚本文件是否存在
       if (!fs.existsSync(scriptData.path)) {
         throw new Error(`脚本文件不存在: ${scriptData.path}`);
@@ -19,27 +19,36 @@ class ScriptExecutor {
 
       // 根据脚本类型确定启动命令
       const command = this.getScriptCommand(scriptData.type, scriptData.path);
-      
+
       console.log(`启动命令: ${command.cmd} ${command.args.join(' ')}`);
 
       // 在Windows上，使用cmd /c start来在新窗口中启动脚本
       let finalCmd, finalArgs;
-      
+
       if (process.platform === 'win32') {
         // Windows: 在新控制台窗口中启动
+        // 使用绝对路径避免相对路径问题
+        const absoluteScriptPath = path.resolve(scriptData.path);
+        const absoluteCommand = this.getScriptCommand(scriptData.type, absoluteScriptPath);
+
         finalCmd = 'cmd';
-        finalArgs = ['/c', 'start', `"${scriptData.name}"`, command.cmd, ...command.args];
+        finalArgs = ['/c', 'start', `"${scriptData.name}"`, '/D', path.dirname(absoluteScriptPath), absoluteCommand.cmd, ...absoluteCommand.args];
       } else {
         // 其他平台: 直接启动
         finalCmd = command.cmd;
         finalArgs = command.args;
       }
 
+      // 确定工作目录
+      const workingDir = process.platform === 'win32'
+        ? path.dirname(path.resolve(scriptData.path))
+        : path.dirname(scriptData.path);
+
       const childProcess = spawn(finalCmd, finalArgs, {
         detached: true,   // 独立进程
         stdio: 'ignore',  // 不捕获输出
         shell: false,     // 不使用shell（因为我们已经用cmd处理了）
-        cwd: path.dirname(scriptData.path), // 设置工作目录
+        cwd: workingDir, // 设置工作目录
         env: {
           ...process.env,
           PYTHONIOENCODING: 'utf-8',
@@ -153,17 +162,17 @@ class ScriptExecutor {
     try {
       process.kill(processInfo.pid, 'SIGTERM');
       this.launchedProcesses.delete(scriptId);
-      return { 
-        success: true, 
-        message: `已停止脚本: ${processInfo.name}` 
+      return {
+        success: true,
+        message: `已停止脚本: ${processInfo.name}`
       };
     } catch (error) {
-      return { 
-        success: false, 
-        error: `停止脚本失败: ${error.message}` 
+      return {
+        success: false,
+        error: `停止脚本失败: ${error.message}`
       };
     }
   }
 }
 
-module.exports = ScriptExecutor; 
+module.exports = ScriptExecutor;
