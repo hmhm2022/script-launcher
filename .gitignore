@@ -78,8 +78,14 @@ temp/
 
 # Application specific
 app/data/scripts.json.backup
+app/data/tasks.json.backup
 *.tmp
 *.temp
+
+# Development and testing files
+定时任务*.md
+v*.md
+测试*.md
 
 # Windows specific
 *.lnk
@@ -97,4 +103,5 @@ app/data/scripts.json.backup
 *.old
 
 # Internal documentation (not for public repo)
-GITHUB_SETUP.md 
+GITHUB_SETUP.md
+memory-bank/

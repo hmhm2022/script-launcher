@@ -15,7 +15,7 @@
                     <span class="app-icon">⚡</span>
                     脚本管理器
                 </h1>
-                <span class="version-info">v1.1.1</span>
+                <span class="version-info">v1.2.1</span>
             </div>
 
             <div class="header-center">
@@ -32,6 +32,9 @@
                 </button>
                 <button class="btn btn-secondary" id="refresh-btn" title="刷新">
                     <span class="btn-icon">↻</span>
+                </button>
+                <button class="btn btn-secondary" id="timer-btn" title="定时任务">
+                    <span class="btn-icon">⏰</span>
                 </button>
                 <button class="btn btn-secondary" id="settings-btn" title="设置">
                     <span class="btn-icon">⚙️</span>
@@ -155,6 +158,10 @@
             <span class="menu-icon">✎</span>
             编辑信息
         </div>
+        <div class="context-menu-item" id="context-schedule">
+            <span class="menu-icon">⏰</span>
+            设置定时
+        </div>
         <div class="context-menu-item" id="context-copy">
             <span class="menu-icon">📋</span>
             复制路径
@@ -170,6 +177,7 @@
     <div id="notification-container" class="notification-container"></div>
 
     <!-- 加载脚本 -->
+    <script src="task-manager.js"></script>
     <script src="renderer.js"></script>
 </body>
 </html>

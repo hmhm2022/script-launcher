@@ -67,8 +67,8 @@ const originalConsoleError = console.error;
 console.error = (...args) => {
   const message = args.join(' ');
   // 过滤掉已知的无害错误
-  if (message.includes('cache_util_win.cc') || 
-      message.includes('gpu_disk_cache.cc') || 
+  if (message.includes('cache_util_win.cc') ||
+      message.includes('gpu_disk_cache.cc') ||
       message.includes('disk_cache.cc') ||
       message.includes('Unable to move the cache') ||
       message.includes('Gpu Cache Creation failed') ||
@@ -86,6 +86,7 @@ console.error = (...args) => {
 const ScriptManager = require('./app/main/script-manager');
 const ScriptExecutor = require('./app/main/script-executor');
 const FileManager = require('./app/main/file-manager');
+const TaskScheduler = require('./app/main/task-scheduler');
 
 class ScriptManagerApp {
   constructor() {
@@ -93,7 +94,8 @@ class ScriptManagerApp {
     this.scriptManager = new ScriptManager();
     this.scriptExecutor = new ScriptExecutor();
     this.fileManager = new FileManager();
-    
+    this.taskScheduler = new TaskScheduler(this.scriptExecutor, this.scriptManager);
+
     this.initializeApp();
   }
 
@@ -224,9 +226,9 @@ class ScriptManagerApp {
     // 获取已启动的进程列表
     ipcMain.handle('get-launched-processes', async () => {
       try {
-        return { 
-          success: true, 
-          processes: this.scriptExecutor.getLaunchedProcesses() 
+        return {
+          success: true,
+          processes: this.scriptExecutor.getLaunchedProcesses()
         };
       } catch (error) {
         console.error('获取进程列表失败:', error);
@@ -288,8 +290,84 @@ class ScriptManagerApp {
         return { success: false, error: error.message };
       }
     });
+
+    // 定时任务相关IPC
+    ipcMain.handle('get-tasks', async () => {
+      try {
+        const tasks = this.taskScheduler.getTasks();
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('获取任务列表失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('create-task', async (event, taskData) => {
+      try {
+        return await this.taskScheduler.createTask(taskData);
+      } catch (error) {
+        console.error('创建任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('update-task', async (event, taskId, updates) => {
+      try {
+        return await this.taskScheduler.updateTask(taskId, updates);
+      } catch (error) {
+        console.error('更新任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('delete-task', async (event, taskId) => {
+      try {
+        return await this.taskScheduler.deleteTask(taskId);
+      } catch (error) {
+        console.error('删除任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('toggle-task', async (event, taskId, enabled) => {
+      try {
+        return await this.taskScheduler.toggleTask(taskId, enabled);
+      } catch (error) {
+        console.error('切换任务状态失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('run-task-now', async (event, taskId) => {
+      try {
+        return await this.taskScheduler.runTaskNow(taskId);
+      } catch (error) {
+        console.error('立即执行任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('get-tasks-by-script', async (event, scriptId) => {
+      try {
+        const tasks = this.taskScheduler.getTasksByScript(scriptId);
+        return { success: true, tasks };
+      } catch (error) {
+        console.error('获取脚本任务失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('get-scheduler-status', async () => {
+      try {
+        const status = this.taskScheduler.getStatus();
+        return { success: true, status };
+      } catch (error) {
+        console.error('获取调度器状态失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
   }
 }
 
 // 创建应用实例
-new ScriptManagerApp(); 
+new ScriptManagerApp();

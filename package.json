@@ -1,6 +1,6 @@
 {
   "name": "scripts-manager-client",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "轻量级脚本管理器桌面客户端",
   "main": "main.js",
   "scripts": {

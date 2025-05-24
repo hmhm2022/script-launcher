@@ -10,10 +10,10 @@ class ScriptManager {
     this.currentSort = 'name';
     this.searchQuery = '';
     this.selectedScript = null;
-    
+
     // DOM元素引用
     this.elements = {};
-    
+
     // 初始化应用
     this.initializeApp();
   }
@@ -31,19 +31,19 @@ class ScriptManager {
     try {
       // 获取DOM元素引用
       this.initializeElements();
-      
+
       // 设置事件监听器
       this.setupEventListeners();
-      
+
       // 加载脚本数据
       await this.loadScripts();
-      
+
       // 渲染界面
       this.renderScripts();
-      
+
       // 更新统计信息
       this.updateStatistics();
-      
+
       console.log('脚本管理器初始化完成');
     } catch (error) {
       console.error('初始化失败:', error);
@@ -55,43 +55,44 @@ class ScriptManager {
     // 搜索和过滤
     this.elements.searchInput = document.getElementById('search-input');
     this.elements.sortSelect = document.getElementById('sort-select');
-    
+
     // 分类标签
     this.elements.categoryTabs = document.querySelectorAll('.category-tab');
-    
+
     // 主要按钮
     this.elements.addScriptBtn = document.getElementById('add-script-btn');
     this.elements.welcomeAddBtn = document.getElementById('welcome-add-btn');
     this.elements.refreshBtn = document.getElementById('refresh-btn');
     this.elements.settingsBtn = document.getElementById('settings-btn');
-    
+
     // 内容区域
     this.elements.scriptsGrid = document.getElementById('scripts-grid');
     this.elements.welcomeScreen = document.getElementById('welcome-screen');
     this.elements.loadingScreen = document.getElementById('loading-screen');
     this.elements.emptyScreen = document.getElementById('empty-screen');
-    
+
     // 状态栏
     this.elements.totalScripts = document.getElementById('total-scripts');
     this.elements.runningScripts = document.getElementById('running-scripts');
     this.elements.lastUpdate = document.getElementById('last-update');
-    
+
     // 模态对话框
     this.elements.modalOverlay = document.getElementById('modal-overlay');
     this.elements.modalTitle = document.getElementById('modal-title');
     this.elements.modalBody = document.getElementById('modal-body');
     this.elements.modalClose = document.getElementById('modal-close');
-    
+
     // 右键菜单
     this.elements.contextMenu = document.getElementById('context-menu');
     this.elements.contextLaunch = document.getElementById('context-launch');
     this.elements.contextEdit = document.getElementById('context-edit');
+    this.elements.contextSchedule = document.getElementById('context-schedule');
     this.elements.contextCopy = document.getElementById('context-copy');
     this.elements.contextDelete = document.getElementById('context-delete');
-    
+
     // 通知容器
     this.elements.notificationContainer = document.getElementById('notification-container');
-    
+
     // 分类计数
     this.elements.countAll = document.getElementById('count-all');
     this.elements.countPython = document.getElementById('count-python');
@@ -124,7 +125,7 @@ class ScriptManager {
     this.elements.addScriptBtn?.addEventListener('click', () => {
       this.showAddScriptModal();
     });
-    
+
     this.elements.welcomeAddBtn?.addEventListener('click', () => {
       this.showAddScriptModal();
     });
@@ -143,7 +144,7 @@ class ScriptManager {
     this.elements.modalClose?.addEventListener('click', () => {
       this.hideModal();
     });
-    
+
     this.elements.modalOverlay?.addEventListener('click', (e) => {
       if (e.target === this.elements.modalOverlay) {
         this.hideModal();
@@ -168,6 +169,13 @@ class ScriptManager {
     this.elements.contextCopy?.addEventListener('click', () => {
       if (this.selectedScript) {
         this.copyScriptPath(this.selectedScript);
+      }
+      this.hideContextMenu();
+    });
+
+    this.elements.contextSchedule?.addEventListener('click', () => {
+      if (this.selectedScript) {
+        this.showTaskSettingsForScript(this.selectedScript);
       }
       this.hideContextMenu();
     });
@@ -211,7 +219,7 @@ class ScriptManager {
     grid.addEventListener('drop', (e) => {
       e.preventDefault();
       grid.classList.remove('drag-over');
-      
+
       const files = Array.from(e.dataTransfer.files);
       files.forEach(file => {
         if (this.isScriptFile(file.name)) {
@@ -224,18 +232,18 @@ class ScriptManager {
   async loadScripts() {
     try {
       this.showLoading(true);
-      
+
       const result = await window.electronAPI.loadScripts();
-      
+
       if (result.success) {
         this.scripts.clear();
-        
+
         if (result.scripts && Array.isArray(result.scripts)) {
           result.scripts.forEach(script => {
             this.scripts.set(script.id, script);
           });
         }
-        
+
         this.updateLastUpdateTime();
         console.log(`加载了 ${this.scripts.size} 个脚本`);
       } else {
@@ -257,7 +265,7 @@ class ScriptManager {
     this.showNotification('脚本列表已刷新', 'success');
   }
 
-  renderScripts() {
+  async renderScripts() {
     const grid = this.elements.scriptsGrid;
     if (!grid) return;
 
@@ -279,11 +287,11 @@ class ScriptManager {
       return;
     }
 
-    // 渲染脚本卡片
-    filteredScripts.forEach(script => {
-      const card = this.createScriptCard(script);
+    // 渲染脚本卡片（异步）
+    for (const script of filteredScripts) {
+      const card = await this.createScriptCard(script);
       grid.appendChild(card);
-    });
+    }
 
     // 更新分类计数
     this.updateCategoryCounts();
@@ -328,22 +336,31 @@ class ScriptManager {
     return scripts;
   }
 
-  createScriptCard(script) {
+  async createScriptCard(script) {
     const card = document.createElement('div');
     card.className = 'script-card';
     card.dataset.scriptId = script.id;
 
     // 获取脚本图标
     const icon = this.getScriptIcon(script.type);
-    
+
     // 获取脚本类型显示名称
     const typeDisplay = this.getScriptTypeDisplay(script.type);
+
+    // 获取定时任务信息
+    const taskInfo = await this.getScriptTaskInfo(script.id);
 
     card.innerHTML = `
       <div class="card-icon">${icon}</div>
       <div class="card-title" title="${script.name}">${script.name}</div>
       <div class="card-type">${typeDisplay}</div>
       <div class="card-description" title="${script.description || '暂无描述'}">${script.description || '暂无描述'}</div>
+      ${taskInfo.hasTask ? `
+        <div class="card-timer-info">
+          <span class="timer-icon">⏰</span>
+          <span class="timer-text">${taskInfo.scheduleText}</span>
+        </div>
+      ` : ''}
       <div class="card-footer">
         <div class="card-status">就绪</div>
         <div class="card-actions">
@@ -382,7 +399,7 @@ class ScriptManager {
       e.stopPropagation();
       this.launchScript(script.id);
     });
-    
+
     actionBtns[1]?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.showEditScriptModal(script.id);
@@ -398,7 +415,7 @@ class ScriptManager {
 
       // 更新卡片状态为启动中
       this.updateCardStatus(scriptId, 'launching', '启动中...');
-      
+
       this.showNotification(`正在启动脚本: ${script.name}`, 'info');
 
       const result = await window.electronAPI.launchScript(scriptId);
@@ -407,37 +424,37 @@ class ScriptManager {
         // 更新使用次数
         script.usageCount = (script.usageCount || 0) + 1;
         script.lastUsed = new Date().toISOString();
-        
+
         // 保存更新
         await window.electronAPI.updateScript(scriptId, script);
-        
+
         // 更新卡片状态
         this.updateCardStatus(scriptId, 'running', '运行中');
-        
+
         this.showNotification(`脚本启动成功: ${script.name}`, 'success');
-        
+
         // 3秒后恢复就绪状态（因为脚本是独立运行的）
         setTimeout(() => {
           this.updateCardStatus(scriptId, 'ready', '就绪');
         }, 3000);
-        
+
       } else {
         this.updateCardStatus(scriptId, 'error', '启动失败');
         this.showNotification(`启动失败: ${result.error}`, 'error');
-        
+
         // 2秒后恢复就绪状态
         setTimeout(() => {
           this.updateCardStatus(scriptId, 'ready', '就绪');
         }, 2000);
       }
-      
+
       this.updateStatistics();
-      
+
     } catch (error) {
       console.error('启动脚本失败:', error);
       this.updateCardStatus(scriptId, 'error', '启动失败');
       this.showNotification('启动脚本失败: ' + error.message, 'error');
-      
+
       setTimeout(() => {
         this.updateCardStatus(scriptId, 'ready', '就绪');
       }, 2000);
@@ -450,7 +467,7 @@ class ScriptManager {
 
     // 移除所有状态类
     card.classList.remove('launching', 'running', 'error');
-    
+
     // 添加新状态类
     if (status !== 'ready') {
       card.classList.add(status);
@@ -465,12 +482,12 @@ class ScriptManager {
 
   switchCategory(category) {
     this.currentCategory = category;
-    
+
     // 更新标签状态
     this.elements.categoryTabs?.forEach(tab => {
       tab.classList.toggle('active', tab.dataset.category === category);
     });
-    
+
     // 重新渲染
     this.renderScripts();
   }
@@ -517,7 +534,7 @@ class ScriptManager {
   updateLastUpdateTime() {
     if (this.elements.lastUpdate) {
       const now = new Date();
-      const timeString = now.toLocaleTimeString('zh-CN', { 
+      const timeString = now.toLocaleTimeString('zh-CN', {
         hour12: false,
         hour: '2-digit',
         minute: '2-digit'
@@ -573,7 +590,7 @@ class ScriptManager {
       if (!confirmed) return;
 
       const result = await window.electronAPI.deleteScript(scriptId);
-      
+
       if (result.success) {
         this.scripts.delete(scriptId);
         this.renderScripts();
@@ -585,6 +602,17 @@ class ScriptManager {
     } catch (error) {
       console.error('删除脚本失败:', error);
       this.showNotification('删除脚本失败: ' + error.message, 'error');
+    }
+  }
+
+  /**
+   * 显示脚本的定时任务设置
+   */
+  async showTaskSettingsForScript(scriptId) {
+    if (window.taskManager) {
+      await window.taskManager.showTaskSettingsForScript(scriptId);
+    } else {
+      this.showNotification('定时任务功能未初始化', 'error');
     }
   }
 
@@ -619,7 +647,7 @@ class ScriptManager {
           <label class="form-label">脚本名称</label>
           <input type="text" class="form-input" id="script-name" required>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">脚本路径</label>
           <div class="file-input-group">
@@ -627,7 +655,7 @@ class ScriptManager {
             <button type="button" class="btn btn-secondary" id="browse-file-btn">浏览</button>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">脚本类型</label>
           <select class="form-select" id="script-type" required>
@@ -641,12 +669,12 @@ class ScriptManager {
             <option value="other">其他</option>
           </select>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">描述</label>
           <textarea class="form-textarea" id="script-description" placeholder="可选：描述脚本的功能"></textarea>
         </div>
-        
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancel-btn">取消</button>
           <button type="submit" class="btn btn-primary">添加脚本</button>
@@ -662,7 +690,7 @@ class ScriptManager {
           <label class="form-label">脚本名称</label>
           <input type="text" class="form-input" id="script-name" value="${script.name}" required>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">脚本路径</label>
           <div class="file-input-group">
@@ -670,7 +698,7 @@ class ScriptManager {
             <button type="button" class="btn btn-secondary" id="browse-file-btn">浏览</button>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">脚本类型</label>
           <select class="form-select" id="script-type" required>
@@ -683,12 +711,12 @@ class ScriptManager {
             <option value="other" ${script.type === 'other' ? 'selected' : ''}>其他</option>
           </select>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">描述</label>
           <textarea class="form-textarea" id="script-description" placeholder="可选：描述脚本的功能">${script.description || ''}</textarea>
         </div>
-        
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancel-btn">取消</button>
           <button type="submit" class="btn btn-primary">保存更改</button>
@@ -708,17 +736,17 @@ class ScriptManager {
             <option value="auto">跟随系统</option>
           </select>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">启动时自动刷新</label>
           <input type="checkbox" id="auto-refresh" checked>
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">显示启动通知</label>
           <input type="checkbox" id="show-notifications" checked>
         </div>
-        
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancel-btn">取消</button>
           <button type="button" class="btn btn-primary" id="save-settings-btn">保存设置</button>
@@ -739,7 +767,7 @@ class ScriptManager {
         const result = await window.electronAPI.browseFile();
         if (result.success) {
           pathInput.value = result.filePath;
-          
+
           // 自动检测脚本类型
           const detectedType = this.detectScriptType(result.filePath);
           if (detectedType) {
@@ -773,7 +801,7 @@ class ScriptManager {
         const result = await window.electronAPI.browseFile();
         if (result.success) {
           pathInput.value = result.filePath;
-          
+
           const detectedType = this.detectScriptType(result.filePath);
           if (detectedType) {
             typeSelect.value = detectedType;
@@ -830,7 +858,7 @@ class ScriptManager {
       };
 
       const result = await window.electronAPI.saveScript(scriptData);
-      
+
       if (result.success) {
         this.scripts.set(result.script.id, result.script);
         this.renderScripts();
@@ -867,12 +895,12 @@ class ScriptManager {
       };
 
       const result = await window.electronAPI.updateScript(scriptId, scriptData);
-      
+
       if (result.success) {
         // 更新本地数据
         const script = this.scripts.get(scriptId);
         Object.assign(script, scriptData);
-        
+
         this.renderScripts();
         this.hideModal();
         this.showNotification(`脚本 "${name}" 更新成功`, 'success');
@@ -942,17 +970,64 @@ class ScriptManager {
       e.preventDefault();
       this.showAddScriptModal();
     }
-    
+
     // F5: 刷新
     if (e.key === 'F5') {
       e.preventDefault();
       this.refreshScripts();
     }
-    
+
     // Escape: 关闭模态框或右键菜单
     if (e.key === 'Escape') {
       this.hideModal();
       this.hideContextMenu();
+    }
+  }
+
+  /**
+   * 获取脚本的定时任务信息
+   */
+  async getScriptTaskInfo(scriptId) {
+    try {
+      const result = await window.electronAPI.getTasksByScript(scriptId);
+      if (result.success && result.tasks.length > 0) {
+        const activeTasks = result.tasks.filter(task => task.enabled);
+        if (activeTasks.length > 0) {
+          const task = activeTasks[0]; // 显示第一个活跃任务
+          return {
+            hasTask: true,
+            scheduleText: this.formatTaskSchedule(task.schedule),
+            taskCount: activeTasks.length
+          };
+        }
+      }
+      return { hasTask: false };
+    } catch (error) {
+      console.error('获取脚本任务信息失败:', error);
+      return { hasTask: false };
+    }
+  }
+
+  /**
+   * 格式化任务调度信息
+   */
+  formatTaskSchedule(schedule) {
+    switch (schedule.type) {
+      case 'interval':
+        const minutes = Math.floor(schedule.value / 60000);
+        const hours = Math.floor(minutes / 60);
+        if (hours > 0) {
+          return `每${hours}小时`;
+        } else {
+          return `每${minutes}分钟`;
+        }
+      case 'daily':
+        return `每天${schedule.time}`;
+      case 'weekly':
+        const days = ['日', '一', '二', '三', '四', '五', '六'];
+        return `周${days[schedule.day]} ${schedule.time}`;
+      default:
+        return '定时任务';
     }
   }
 
@@ -1027,7 +1102,7 @@ class ScriptManager {
   async addScriptFromFile(filePath) {
     const name = filePath.split(/[/\\]/).pop().replace(/\.[^/.]+$/, '');
     const type = this.detectScriptType(filePath);
-    
+
     const scriptData = {
       name,
       path: filePath,
@@ -1054,5 +1129,9 @@ class ScriptManager {
 }
 
 // 初始化应用
-const scriptManager = new ScriptManager(); 
-const app = new ScriptManagerApp(); 
+const scriptManager = new ScriptManager();
+const taskManager = new TaskManager();
+const app = new ScriptManagerApp();
+
+// 将taskManager添加到全局，方便其他组件使用
+window.taskManager = taskManager;
