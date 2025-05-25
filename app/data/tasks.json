@@ -9,9 +9,9 @@
     },
     "enabled": true,
     "createdAt": "2025-05-24T12:17:01.323Z",
-    "lastRun": "2025-05-24T13:28:00.014Z",
+    "lastRun": "2025-05-24T15:25:12.150Z",
     "nextRun": "2025-05-25T13:28:00.000Z",
-    "runCount": 16,
+    "runCount": 17,
     "updatedAt": "2025-05-24T13:27:33.834Z"
   },
   {
@@ -30,21 +30,6 @@
     "updatedAt": "2025-05-24T13:28:38.095Z"
   },
   {
-    "id": "task_1748090609592_krfvx5lbx",
-    "scriptId": 3,
-    "name": "空货位",
-    "schedule": {
-      "type": "daily",
-      "time": "21:29"
-    },
-    "enabled": true,
-    "createdAt": "2025-05-24T12:43:29.592Z",
-    "lastRun": "2025-05-24T13:29:00.012Z",
-    "nextRun": "2025-05-25T13:29:00.000Z",
-    "runCount": 7,
-    "updatedAt": "2025-05-24T13:28:53.125Z"
-  },
-  {
     "id": "task_1748093491776_mkustn8du",
     "scriptId": 1,
     "name": "示例Python",
@@ -58,5 +43,20 @@
     "nextRun": "2025-05-25T01:00:00.000Z",
     "runCount": 1,
     "updatedAt": "2025-05-24T13:40:35.193Z"
+  },
+  {
+    "id": "task_1748100342127_ihcr6v1gf",
+    "scriptId": 3,
+    "name": "空货位",
+    "schedule": {
+      "type": "daily",
+      "time": "09:00"
+    },
+    "enabled": true,
+    "createdAt": "2025-05-24T15:25:42.127Z",
+    "lastRun": "2025-05-24T15:27:14.123Z",
+    "nextRun": "2025-05-25T01:00:00.000Z",
+    "runCount": 2,
+    "updatedAt": "2025-05-24T15:27:09.785Z"
   }
 ]

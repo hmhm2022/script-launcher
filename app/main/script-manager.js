@@ -1,9 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { app } = require('electron');
+const os = require('os');
 
 class ScriptManager {
   constructor() {
-    this.dataFile = path.join(__dirname, '..', 'data', 'scripts.json');
+    // 在便携版中使用用户目录存储数据
+    const userDataPath = app.getPath('userData') || path.join(os.homedir(), '.script-manager');
+    this.dataFile = path.join(userDataPath, 'scripts.json');
     this.ensureDataFile();
   }
 
@@ -27,27 +31,9 @@ class ScriptManager {
 
   async createInitialData() {
     console.log('ScriptManager: 创建初始脚本数据...');
-    
-    const initialScripts = [
-      {
-        id: 1,
-        name: '示例Python脚本',
-        type: 'python',
-        path: path.join(process.cwd(), 'example_scripts', 'hello.py'),
-        description: '这是一个示例Python脚本，演示基本的输出功能',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        name: '示例JavaScript脚本',
-        type: 'javascript',
-        path: path.join(process.cwd(), 'example_scripts', 'hello.js'),
-        description: '这是一个示例JavaScript脚本，演示基本的输出功能',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
+
+    // 便携版不包含示例脚本，创建空的脚本列表
+    const initialScripts = [];
 
     try {
       await fs.writeFile(this.dataFile, JSON.stringify(initialScripts, null, 2), 'utf8');
@@ -88,10 +74,10 @@ class ScriptManager {
   async saveScript(scriptData) {
     try {
       const { scripts } = await this.loadScripts();
-      
+
       // 生成新的ID
       const newId = scripts.length > 0 ? Math.max(...scripts.map(s => s.id)) + 1 : 1;
-      
+
       const newScript = {
         id: newId,
         name: scriptData.name,
@@ -104,7 +90,7 @@ class ScriptManager {
 
       scripts.push(newScript);
       await fs.writeFile(this.dataFile, JSON.stringify(scripts, null, 2), 'utf8');
-      
+
       return { success: true, script: newScript };
     } catch (error) {
       console.error('保存脚本失败:', error);
@@ -131,7 +117,7 @@ class ScriptManager {
       };
 
       await fs.writeFile(this.dataFile, JSON.stringify(scripts, null, 2), 'utf8');
-      
+
       return { success: true, script: scripts[index] };
     } catch (error) {
       console.error('更新脚本失败:', error);
@@ -149,7 +135,7 @@ class ScriptManager {
       }
 
       await fs.writeFile(this.dataFile, JSON.stringify(filteredScripts, null, 2), 'utf8');
-      
+
       return { success: true };
     } catch (error) {
       console.error('删除脚本失败:', error);
@@ -171,8 +157,8 @@ class ScriptManager {
     try {
       const { scripts } = await this.loadScripts();
       const lowercaseQuery = query.toLowerCase();
-      
-      const filteredScripts = scripts.filter(script => 
+
+      const filteredScripts = scripts.filter(script =>
         script.name.toLowerCase().includes(lowercaseQuery) ||
         script.type.toLowerCase().includes(lowercaseQuery) ||
         script.description.toLowerCase().includes(lowercaseQuery) ||
@@ -190,7 +176,7 @@ class ScriptManager {
     try {
       const { scripts } = await this.loadScripts();
       const filteredScripts = scripts.filter(script => script.type === type);
-      
+
       return { success: true, scripts: filteredScripts };
     } catch (error) {
       console.error('按类型获取脚本失败:', error);
@@ -199,4 +185,4 @@ class ScriptManager {
   }
 }
 
-module.exports = ScriptManager; 
+module.exports = ScriptManager;

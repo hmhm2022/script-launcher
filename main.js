@@ -51,8 +51,8 @@ app.commandLine.appendSwitch('--disable-dev-shm-usage');
 // 禁用GPU加速以避免GPU进程错误
 app.disableHardwareAcceleration();
 
-// 设置更安全的用户数据目录，避免中文路径问题
-const userDataPath = path.join(os.tmpdir(), 'script-manager-' + Date.now());
+// 设置持久化的用户数据目录，避免中文路径问题
+const userDataPath = path.join(os.homedir(), '.script-manager');
 app.setPath('userData', userDataPath);
 app.setPath('temp', path.join(userDataPath, 'temp'));
 app.setPath('cache', path.join(userDataPath, 'cache'));

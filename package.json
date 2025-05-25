@@ -1,6 +1,6 @@
 {
   "name": "scripts-manager-client",
-  "version": "1.2.1",
+  "version": "1.2.4",
   "description": "轻量级脚本管理器桌面客户端",
   "main": "main.js",
   "scripts": {
@@ -8,14 +8,26 @@
     "dev": "electron . --dev",
     "build": "electron-builder",
     "build-win": "electron-builder --win",
-    "dist": "electron-builder --publish=never"
+    "build-linux": "electron-builder --linux",
+    "build-mac": "electron-builder --mac",
+    "build-portable": "electron-builder --win portable",
+    "build-installer": "electron-builder --win nsis",
+    "dist": "electron-builder --publish=never",
+    "dist-all": "electron-builder --win --linux --mac --publish=never",
+    "clean": "rimraf dist"
   },
-  "keywords": ["script", "manager", "desktop", "electron"],
+  "keywords": [
+    "script",
+    "manager",
+    "desktop",
+    "electron"
+  ],
   "author": "Scripts Manager",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+    "rimraf": "^6.0.1"
   },
   "dependencies": {
     "iconv-lite": "^0.6.3"
@@ -30,15 +42,55 @@
       "main.js",
       "preload.js",
       "app/**/*",
-      "example_scripts/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "package.json"
     ],
     "win": {
-      "target": "portable",
-      "icon": "build/icon.ico"
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "portable": {
       "artifactName": "脚本管理器-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "脚本管理器-${version}-setup.exe",
+      "shortcutName": "脚本管理器",
+      "uninstallDisplayName": "脚本管理器"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
     }
   }
 }

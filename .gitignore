@@ -82,6 +82,9 @@ app/data/tasks.json.backup
 *.tmp
 *.temp
 
+# Build configuration
+.npmrc
+
 # Development and testing files
 定时任务*.md
 v*.md

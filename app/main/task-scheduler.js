@@ -1,5 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { app } = require('electron');
+const os = require('os');
 
 /**
  * 轻量级定时任务调度器
@@ -11,7 +13,10 @@ class TaskScheduler {
     this.scriptManager = scriptManager;
     this.tasks = new Map(); // 存储任务配置
     this.timers = new Map(); // 存储定时器
-    this.dataFile = path.join(__dirname, '..', 'data', 'tasks.json');
+
+    // 在便携版中使用用户目录存储数据
+    const userDataPath = app.getPath('userData') || path.join(os.homedir(), '.script-manager');
+    this.dataFile = path.join(userDataPath, 'tasks.json');
     this.isRunning = false;
 
     this.init();
@@ -307,7 +312,8 @@ class TaskScheduler {
       }
 
       // 如果没有scriptManager，直接从文件读取
-      const scriptsFile = path.join(__dirname, '..', 'data', 'scripts.json');
+      const userDataPath = app.getPath('userData') || path.join(os.homedir(), '.script-manager');
+      const scriptsFile = path.join(userDataPath, 'scripts.json');
       const data = await fs.readFile(scriptsFile, 'utf8');
       const scripts = JSON.parse(data);
 
@@ -368,7 +374,7 @@ class TaskScheduler {
    * 生成任务ID
    */
   generateTaskId() {
-    return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `task_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
