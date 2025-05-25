@@ -87,6 +87,7 @@ const ScriptManager = require('./app/main/script-manager');
 const ScriptExecutor = require('./app/main/script-executor');
 const FileManager = require('./app/main/file-manager');
 const TaskScheduler = require('./app/main/task-scheduler');
+const SettingsManager = require('./app/main/settings-manager');
 
 class ScriptManagerApp {
   constructor() {
@@ -94,6 +95,7 @@ class ScriptManagerApp {
     this.scriptManager = new ScriptManager();
     this.scriptExecutor = new ScriptExecutor();
     this.fileManager = new FileManager();
+    this.settingsManager = new SettingsManager();
     this.taskScheduler = new TaskScheduler(this.scriptExecutor, this.scriptManager);
 
     this.initializeApp();
@@ -363,6 +365,34 @@ class ScriptManagerApp {
         return { success: true, status };
       } catch (error) {
         console.error('获取调度器状态失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 设置相关IPC
+    ipcMain.handle('load-settings', async () => {
+      try {
+        return await this.settingsManager.loadSettings();
+      } catch (error) {
+        console.error('加载设置失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('save-settings', async (event, settings) => {
+      try {
+        return await this.settingsManager.saveSettings(settings);
+      } catch (error) {
+        console.error('保存设置失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('get-setting', async (event, key) => {
+      try {
+        return await this.settingsManager.getSetting(key);
+      } catch (error) {
+        console.error(`获取设置 ${key} 失败:`, error);
         return { success: false, error: error.message };
       }
     });

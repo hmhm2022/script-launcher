@@ -15,7 +15,7 @@
                     <span class="app-icon">⚡</span>
                     脚本管理器
                 </h1>
-                <span class="version-info">v1.2.4</span>
+                <span class="version-info">v1.3.1</span>
             </div>
 
             <div class="header-center">
@@ -46,27 +46,49 @@
         <nav class="category-nav">
             <div class="category-tabs">
                 <button class="category-tab active" data-category="all">
-                    <span class="tab-icon">📋</span>
+                    <span class="tab-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#607D8B" d="M3,5H9V11H3V5M5,7V9H7V7H5M11,7H21V9H11V7M11,15H21V17H11V15M5,13V15H7V13H5M3,13H9V19H3V13Z" />
+                        </svg>
+                    </span>
                     全部脚本
                     <span class="tab-count" id="count-all">0</span>
                 </button>
                 <button class="category-tab" data-category="python">
-                    <span class="tab-icon">🐍</span>
+                    <span class="tab-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#3776AB" d="M11.94,0C5.86,0,6.24,2.68,6.24,2.68l0,2.75h5.8v0.83H3.93c0,0-3.93-0.44-3.93,5.77 s3.43,5.97,3.43,5.97h2.04v-2.87c0,0-0.11-3.43,3.38-3.43h5.82c0,0,3.26,0.05,3.26-3.15V3.25C17.93,3.25,18.28,0,11.94,0z M8.75,1.88c0.58,0,1.04,0.47,1.04,1.04c0,0.58-0.47,1.04-1.04,1.04S7.71,3.49,7.71,2.92C7.71,2.34,8.17,1.88,8.75,1.88z"/>
+                            <path fill="#FFC331" d="M12.05,24c6.08,0,5.7-2.68,5.7-2.68l0-2.75h-5.8v-0.83h8.11c0,0,3.93,0.44,3.93-5.77 s-3.43-5.97-3.43-5.97h-2.04v2.87c0,0,0.11,3.43-3.38,3.43H9.33c0,0-3.26-0.05-3.26,3.15v5.33C6.07,20.75,5.72,24,12.05,24z M15.25,22.12c-0.58,0-1.04-0.47-1.04-1.04c0-0.58,0.47-1.04,1.04-1.04c0.58,0,1.04,0.47,1.04,1.04 C16.29,21.66,15.83,22.12,15.25,22.12z"/>
+                        </svg>
+                    </span>
                     Python
                     <span class="tab-count" id="count-python">0</span>
                 </button>
                 <button class="category-tab" data-category="javascript">
-                    <span class="tab-icon">⚡</span>
+                    <span class="tab-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#F7DF1E" d="M0,0h24v24H0V0z"/>
+                            <path fill="#000000" d="M16.8,15.7c0.2,0.5,0.5,0.9,1,1.2c0.5,0.3,1,0.4,1.6,0.4c0.5,0,1-0.1,1.4-0.3 c0.4-0.2,0.6-0.5,0.6-0.9c0-0.3-0.1-0.6-0.4-0.8c-0.3-0.2-0.7-0.4-1.2-0.5l-1.2-0.3c-0.8-0.2-1.5-0.5-2-1c-0.5-0.5-0.8-1.1-0.8-1.9 c0-0.5,0.1-1,0.4-1.4c0.3-0.4,0.6-0.7,1.1-1c0.5-0.3,1-0.4,1.7-0.4c0.9,0,1.6,0.2,2.2,0.6c0.6,0.4,1,1,1.2,1.8l-1.8,0.5 c-0.1-0.3-0.3-0.6-0.6-0.8c-0.3-0.2-0.7-0.3-1.1-0.3c-0.4,0-0.8,0.1-1.1,0.3c-0.3,0.2-0.4,0.4-0.4,0.7c0,0.3,0.1,0.5,0.3,0.7 c0.2,0.2,0.5,0.3,0.9,0.4l1.2,0.3c0.9,0.2,1.6,0.6,2.1,1.1c0.5,0.5,0.7,1.1,0.7,1.9c0,0.6-0.2,1.1-0.5,1.5c-0.3,0.4-0.7,0.8-1.3,1 c-0.5,0.2-1.1,0.4-1.8,0.4c-0.9,0-1.7-0.2-2.4-0.7c-0.7-0.5-1.1-1.1-1.3-2L16.8,15.7z M9.8,15.7c0.1,0.3,0.3,0.5,0.6,0.7 c0.3,0.2,0.6,0.2,0.9,0.2c0.4,0,0.8-0.1,1-0.3c0.3-0.2,0.4-0.5,0.4-0.9v-6.2h2v6.2c0,0.6-0.1,1.1-0.4,1.5c-0.3,0.4-0.6,0.8-1.1,1 c-0.5,0.2-1,0.3-1.6,0.3c-0.9,0-1.7-0.2-2.3-0.7c-0.6-0.5-1-1.1-1.1-1.9L9.8,15.7z"/>
+                        </svg>
+                    </span>
                     JavaScript
                     <span class="tab-count" id="count-javascript">0</span>
                 </button>
                 <button class="category-tab" data-category="batch">
-                    <span class="tab-icon">🔧</span>
+                    <span class="tab-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#000000" d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.58,13L5.57,9H8.4L11.7,12.3C12.09,12.69 12.09,13.33 11.7,13.72L8.42,17H5.59L9.58,13Z"/>
+                        </svg>
+                    </span>
                     批处理
                     <span class="tab-count" id="count-batch">0</span>
                 </button>
                 <button class="category-tab" data-category="other">
-                    <span class="tab-icon">📄</span>
+                    <span class="tab-icon">
+                        <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#607D8B" d="M14,2H6C4.9,2,4,2.9,4,4v16c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V8L14,2z M16,18H8v-2h8V18z M16,14H8v-2h8V14z M13,9V3.5L18.5,9H13z"/>
+                        </svg>
+                    </span>
                     其他
                     <span class="tab-count" id="count-other">0</span>
                 </button>

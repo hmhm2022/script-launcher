@@ -30,6 +30,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTasksByScript: (scriptId) => ipcRenderer.invoke('get-tasks-by-script', scriptId),
   getSchedulerStatus: () => ipcRenderer.invoke('get-scheduler-status'),
 
+  // 设置相关API
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  getSetting: (key) => ipcRenderer.invoke('get-setting', key),
+
   // 工具函数
   platform: process.platform,
   version: process.versions.electron

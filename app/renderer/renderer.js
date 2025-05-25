@@ -10,6 +10,7 @@ class ScriptManager {
     this.currentSort = 'name';
     this.searchQuery = '';
     this.selectedScript = null;
+    this.settings = null;
 
     // DOM元素引用
     this.elements = {};
@@ -35,8 +36,16 @@ class ScriptManager {
       // 设置事件监听器
       this.setupEventListeners();
 
+      // 加载设置
+      await this.loadSettings();
+
+      // 应用设置
+      this.applySettings();
+
       // 加载脚本数据
+      if (this.settings.autoRefresh) {
       await this.loadScripts();
+      }
 
       // 渲染界面
       this.renderScripts();
@@ -416,7 +425,10 @@ class ScriptManager {
       // 更新卡片状态为启动中
       this.updateCardStatus(scriptId, 'launching', '启动中...');
 
+      // 根据设置决定是否显示启动通知
+      if (this.settings?.showNotifications !== false) {
       this.showNotification(`正在启动脚本: ${script.name}`, 'info');
+      }
 
       const result = await window.electronAPI.launchScript(scriptId);
 
@@ -431,7 +443,10 @@ class ScriptManager {
         // 更新卡片状态
         this.updateCardStatus(scriptId, 'running', '运行中');
 
+        // 根据设置决定是否显示成功通知
+        if (this.settings?.showNotifications !== false) {
         this.showNotification(`脚本启动成功: ${script.name}`, 'success');
+        }
 
         // 3秒后恢复就绪状态（因为脚本是独立运行的）
         setTimeout(() => {
@@ -440,6 +455,7 @@ class ScriptManager {
 
       } else {
         this.updateCardStatus(scriptId, 'error', '启动失败');
+        // 错误通知始终显示，不受设置影响
         this.showNotification(`启动失败: ${result.error}`, 'error');
 
         // 2秒后恢复就绪状态
@@ -659,6 +675,18 @@ class ScriptManager {
   showSettingsModal() {
     this.elements.modalTitle.textContent = '设置';
     this.elements.modalBody.innerHTML = this.getSettingsModalContent();
+    
+    // 设置表单值
+    if (this.settings) {
+      const themeSelect = document.getElementById('theme-select');
+      const autoRefresh = document.getElementById('auto-refresh');
+      const showNotifications = document.getElementById('show-notifications');
+      
+      if (themeSelect) themeSelect.value = this.settings.theme || 'light';
+      if (autoRefresh) autoRefresh.checked = this.settings.autoRefresh !== false;
+      if (showNotifications) showNotifications.checked = this.settings.showNotifications !== false;
+    }
+    
     this.setupSettingsModalEvents();
     this.showModal();
   }
@@ -761,13 +789,17 @@ class ScriptManager {
         </div>
 
         <div class="form-group">
-          <label class="form-label">启动时自动刷新</label>
+          <label class="checkbox-label">
           <input type="checkbox" id="auto-refresh" checked>
+            <span>启动时自动刷新</span>
+          </label>
         </div>
 
         <div class="form-group">
-          <label class="form-label">显示启动通知</label>
+          <label class="checkbox-label">
           <input type="checkbox" id="show-notifications" checked>
+            <span>显示启动通知</span>
+          </label>
         </div>
 
         <div class="form-actions">
@@ -936,9 +968,65 @@ class ScriptManager {
     }
   }
 
-  saveSettings() {
-    // 这里可以保存设置到本地存储或配置文件
+  async loadSettings() {
+    try {
+      const result = await window.electronAPI.loadSettings();
+      
+      if (result.success) {
+        this.settings = result.settings;
+        console.log('设置加载成功:', this.settings);
+      } else {
+        throw new Error(result.error || '加载设置失败');
+      }
+    } catch (error) {
+      console.error('加载设置失败:', error);
+      this.showNotification('加载设置失败: ' + error.message, 'error');
+      // 使用默认设置
+      this.settings = {
+        theme: 'light',
+        autoRefresh: true,
+        showNotifications: true
+      };
+    }
+  }
+
+  applySettings() {
+    if (!this.settings) return;
+
+    // 应用主题
+    document.documentElement.setAttribute('data-theme', this.settings.theme);
+    
+    // 其他设置应用逻辑可以在这里添加
+    console.log('已应用设置');
+  }
+
+  async saveSettings() {
+    try {
+      // 获取设置表单中的值
+      const themeSelect = document.getElementById('theme-select');
+      const autoRefresh = document.getElementById('auto-refresh');
+      const showNotifications = document.getElementById('show-notifications');
+      
+      const newSettings = {
+        theme: themeSelect.value,
+        autoRefresh: autoRefresh.checked,
+        showNotifications: showNotifications.checked
+      };
+      
+      // 保存设置
+      const result = await window.electronAPI.saveSettings(newSettings);
+      
+      if (result.success) {
+        this.settings = result.settings;
+        this.applySettings();
     this.showNotification('设置已保存', 'success');
+      } else {
+        throw new Error(result.error || '保存设置失败');
+      }
+    } catch (error) {
+      console.error('保存设置失败:', error);
+      this.showNotification('保存设置失败: ' + error.message, 'error');
+    }
   }
 
   showModal() {
@@ -1056,16 +1144,41 @@ class ScriptManager {
 
   // 工具方法
   getScriptIcon(type) {
-    const icons = {
-      python: '🐍',
-      javascript: '⚡',
-      typescript: '🔷',
-      batch: '🔧',
-      powershell: '💙',
-      bash: '🐚',
-      other: '📄'
+    // SVG图标库
+    const svgIcons = {
+      python: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#3776AB" d="M11.94,0C5.86,0,6.24,2.68,6.24,2.68l0,2.75h5.8v0.83H3.93c0,0-3.93-0.44-3.93,5.77 s3.43,5.97,3.43,5.97h2.04v-2.87c0,0-0.11-3.43,3.38-3.43h5.82c0,0,3.26,0.05,3.26-3.15V3.25C17.93,3.25,18.28,0,11.94,0z M8.75,1.88c0.58,0,1.04,0.47,1.04,1.04c0,0.58-0.47,1.04-1.04,1.04S7.71,3.49,7.71,2.92C7.71,2.34,8.17,1.88,8.75,1.88z"/>
+                <path fill="#FFC331" d="M12.05,24c6.08,0,5.7-2.68,5.7-2.68l0-2.75h-5.8v-0.83h8.11c0,0,3.93,0.44,3.93-5.77 s-3.43-5.97-3.43-5.97h-2.04v2.87c0,0,0.11,3.43-3.38,3.43H9.33c0,0-3.26-0.05-3.26,3.15v5.33C6.07,20.75,5.72,24,12.05,24z M15.25,22.12c-0.58,0-1.04-0.47-1.04-1.04c0-0.58,0.47-1.04,1.04-1.04c0.58,0,1.04,0.47,1.04,1.04 C16.29,21.66,15.83,22.12,15.25,22.12z"/>
+              </svg>`,
+      javascript: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#F7DF1E" d="M0,0h24v24H0V0z"/>
+                    <path fill="#000000" d="M16.8,15.7c0.2,0.5,0.5,0.9,1,1.2c0.5,0.3,1,0.4,1.6,0.4c0.5,0,1-0.1,1.4-0.3 c0.4-0.2,0.6-0.5,0.6-0.9c0-0.3-0.1-0.6-0.4-0.8c-0.3-0.2-0.7-0.4-1.2-0.5l-1.2-0.3c-0.8-0.2-1.5-0.5-2-1c-0.5-0.5-0.8-1.1-0.8-1.9 c0-0.5,0.1-1,0.4-1.4c0.3-0.4,0.6-0.7,1.1-1c0.5-0.3,1-0.4,1.7-0.4c0.9,0,1.6,0.2,2.2,0.6c0.6,0.4,1,1,1.2,1.8l-1.8,0.5 c-0.1-0.3-0.3-0.6-0.6-0.8c-0.3-0.2-0.7-0.3-1.1-0.3c-0.4,0-0.8,0.1-1.1,0.3c-0.3,0.2-0.4,0.4-0.4,0.7c0,0.3,0.1,0.5,0.3,0.7 c0.2,0.2,0.5,0.3,0.9,0.4l1.2,0.3c0.9,0.2,1.6,0.6,2.1,1.1c0.5,0.5,0.7,1.1,0.7,1.9c0,0.6-0.2,1.1-0.5,1.5c-0.3,0.4-0.7,0.8-1.3,1 c-0.5,0.2-1.1,0.4-1.8,0.4c-0.9,0-1.7-0.2-2.4-0.7c-0.7-0.5-1.1-1.1-1.3-2L16.8,15.7z M9.8,15.7c0.1,0.3,0.3,0.5,0.6,0.7 c0.3,0.2,0.6,0.2,0.9,0.2c0.4,0,0.8-0.1,1-0.3c0.3-0.2,0.4-0.5,0.4-0.9v-6.2h2v6.2c0,0.6-0.1,1.1-0.4,1.5c-0.3,0.4-0.6,0.8-1.1,1 c-0.5,0.2-1,0.3-1.6,0.3c-0.9,0-1.7-0.2-2.3-0.7c-0.6-0.5-1-1.1-1.1-1.9L9.8,15.7z"/>
+                  </svg>`,
+      typescript: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#3178C6" d="M0,0h24v24H0V0z"/>
+                    <path fill="#FFFFFF" d="M18.9,12.3v1.3c-0.4,0-0.7,0-0.9,0.1c-0.2,0-0.4,0.1-0.5,0.3c-0.1,0.1-0.2,0.3-0.2,0.6v0.9h1.6v1.3h-1.6 v7.2h-1.7v-7.2h-1.3v-1.3h1.3v-0.9c0-0.6,0.1-1,0.3-1.4c0.2-0.3,0.5-0.6,0.9-0.8c0.4-0.2,0.9-0.2,1.5-0.2C18.5,12.2,18.7,12.2,18.9,12.3 z M14.4,16.5c0.3,0.3,0.5,0.7,0.5,1.2c0,0.5-0.2,0.9-0.5,1.2c-0.3,0.3-0.7,0.5-1.2,0.5c-0.5,0-0.9-0.2-1.2-0.5 c-0.3-0.3-0.5-0.7-0.5-1.2c0-0.5,0.2-0.9,0.5-1.2c0.3-0.3,0.7-0.5,1.2-0.5C13.7,16,14.1,16.2,14.4,16.5z"/>
+                    <path fill="#FFFFFF" d="M5,13.7h5.2c0.5,0,0.9,0.1,1.3,0.2c0.4,0.1,0.7,0.3,0.9,0.6c0.2,0.3,0.3,0.6,0.3,1c0,0.3-0.1,0.6-0.2,0.9 c-0.1,0.3-0.3,0.5-0.6,0.6c-0.3,0.2-0.6,0.3-0.9,0.3v0.1c0.4,0,0.8,0.1,1.1,0.3c0.3,0.2,0.6,0.4,0.8,0.7c0.2,0.3,0.3,0.6,0.3,1 c0,0.4-0.1,0.8-0.3,1.1c-0.2,0.3-0.6,0.6-1,0.7c-0.4,0.2-0.9,0.3-1.5,0.3H5v-7.8H5z M6.7,15v2.1h2.5c0.4,0,0.7-0.1,0.9-0.3 c0.2-0.2,0.3-0.4,0.3-0.8c0-0.3-0.1-0.6-0.3-0.8c-0.2-0.2-0.5-0.3-0.9-0.3H6.7z M6.7,18.3v2.2h2.7c0.4,0,0.7-0.1,1-0.3 c0.2-0.2,0.3-0.5,0.3-0.8c0-0.3-0.1-0.6-0.3-0.8c-0.2-0.2-0.5-0.3-1-0.3H6.7z"/>
+                  </svg>`,
+      batch: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#000000" d="M20,19V7H4V19H20M20,3A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5C2,3.89 2.9,3 4,3H20M13,17V15H18V17H13M9.58,13L5.57,9H8.4L11.7,12.3C12.09,12.69 12.09,13.33 11.7,13.72L8.42,17H5.59L9.58,13Z"/>
+              </svg>`,
+      powershell: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#012456" d="M0,0h24v24H0V0z"/>
+                    <path fill="#FFFFFF" d="M3.5,4.5h17c0.8,0,1.5,0.7,1.5,1.5v12c0,0.8-0.7,1.5-1.5,1.5h-17C2.7,19.5,2,18.8,2,18V6 C2,5.2,2.7,4.5,3.5,4.5z"/>
+                    <path fill="#012456" d="M10.9,17.4H17c0.3,0,0.5-0.2,0.5-0.5v-1c0-0.3-0.2-0.5-0.5-0.5h-6.1c-0.3,0-0.5,0.2-0.5,0.5v1 C10.4,17.1,10.6,17.4,10.9,17.4z"/>
+                    <path fill="#012456" d="M5.9,17.4l6-4.5c0.2-0.2,0.2-0.5,0-0.7l-6-4.5C5.7,7.5,5.3,7.6,5.1,7.8C4.9,8.1,5,8.5,5.3,8.7l5.2,3.9 l-5.2,3.9c-0.3,0.2-0.3,0.6-0.1,0.9C5.3,17.5,5.7,17.6,5.9,17.4z"/>
+                  </svg>`,
+      bash: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#4EAA25" d="M21.5,2.5c0.8,0,1.5,0.7,1.5,1.5v16c0,0.8-0.7,1.5-1.5,1.5h-19C1.7,21.5,1,20.8,1,20V4 c0-0.8,0.7-1.5,1.5-1.5H21.5z"/>
+              <path fill="#FFFFFF" d="M5.9,15.1l1.7,1.7c0.1,0.1,0.2,0.1,0.3,0l4.1-4.1c0.1-0.1,0.1-0.2,0-0.3L7.9,8.2C7.8,8.1,7.7,8.1,7.6,8.2 L6.3,9.5C6.2,9.6,6.2,9.7,6.3,9.8l2.8,2.8L6.3,15.4C6.2,15.5,6.2,15.6,6.3,15.7l1.3,1.3C7.7,17.1,7.8,17.1,7.9,17l3.7-3.7 c0.1-0.1,0.1-0.2,0-0.3L7.9,9.3C7.8,9.2,7.7,9.2,7.6,9.3L5.9,11C5.8,11.1,5.8,11.2,5.9,11.3l1.7,1.7c0.1,0.1,0.1,0.2,0,0.3L5.9,15.1 z"/>
+              <path fill="#FFFFFF" d="M18,16h-5c-0.3,0-0.5,0.2-0.5,0.5v1c0,0.3,0.2,0.5,0.5,0.5h5c0.3,0,0.5-0.2,0.5-0.5v-1 C18.5,16.2,18.3,16,18,16z"/>
+            </svg>`,
+      other: `<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#607D8B" d="M14,2H6C4.9,2,4,2.9,4,4v16c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V8L14,2z M16,18H8v-2h8V18z M16,14H8v-2h8V14z M13,9V3.5L18.5,9H13z"/>
+              </svg>`
     };
-    return icons[type] || icons.other;
+
+    return svgIcons[type] || svgIcons.other;
   }
 
   getScriptTypeDisplay(type) {
