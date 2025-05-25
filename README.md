@@ -1,6 +1,6 @@
-# 脚本管理器 - 桌面客户端
+# Scripts Manager
 
-这是一个基于Electron的桌面脚本启动器，用于管理和启动各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell等）。
+一个轻量级桌面脚本管理工具，基于Electron构建，用于管理和启动各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell等）。
 
 ## 功能特点
 
@@ -17,7 +17,7 @@
 ## 项目结构
 
 ```
-scripts-manager-client/
+scripts-manager/
 ├── app/                    # 应用核心代码
 │   ├── main/              # 主进程业务逻辑
 │   │   ├── script-manager.js    # 脚本数据管理
@@ -53,7 +53,7 @@ scripts-manager-client/
 1. **克隆项目**
    ```bash
    git clone <repository-url>
-   cd scripts-manager-client
+   cd scripts-manager
    ```
 
 2. **安装依赖**
@@ -178,13 +178,14 @@ npm run dev
 
 ## 项目历史
 
-本项目经历了重大重构：
+本项目经历了重大重构和品牌升级：
 
 - **v0.x**: Web版本（前后端分离）
 - **v1.0**: Electron桌面客户端版本（执行监控器）
 - **v1.1.1**: 重构为脚本启动器，现代化界面
-- **v1.2.2**: 修复便携版数据持久化问题（当前版本）
 - **v1.2.1**: 新增定时任务功能
+- **v1.2.2**: 修复便携版数据持久化问题
+- **v1.3.0**: 品牌统一为"Scripts Manager"，优化国际化支持（当前版本）
 
 重构带来的改进：
 - 从脚本执行监控器转变为脚本启动器
@@ -206,4 +207,4 @@ MIT License
 
 ---
 
-**享受高效的脚本管理体验！** 🚀
+**享受 Scripts Manager 带来的高效脚本管理体验！** 🚀

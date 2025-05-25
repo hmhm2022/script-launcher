@@ -852,8 +852,6 @@ class TaskManager {
     // 使用现有的通知系统
     if (window.scriptManager && window.scriptManager.showNotification) {
       window.scriptManager.showNotification(message, type);
-    } else if (window.app && window.app.showNotification) {
-      window.app.showNotification(message, type);
     } else {
       // 创建简单的通知
       this.createSimpleNotification(message, type);

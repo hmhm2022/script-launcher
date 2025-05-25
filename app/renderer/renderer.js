@@ -609,10 +609,33 @@ class ScriptManager {
    * 显示脚本的定时任务设置
    */
   async showTaskSettingsForScript(scriptId) {
-    if (window.taskManager) {
+    try {
+      if (!scriptId) {
+        this.showNotification('无效的脚本ID', 'error');
+        return;
+      }
+      
+      if (!window.taskManager) {
+        this.showNotification('定时任务功能未初始化', 'error');
+        return;
+      }
+      
+      // 确保模态框已准备好
+      const modalOverlay = document.getElementById('modal-overlay');
+      if (!modalOverlay) {
+        this.showNotification('模态框元素未找到', 'error');
+        return;
+      }
+      
       await window.taskManager.showTaskSettingsForScript(scriptId);
-    } else {
-      this.showNotification('定时任务功能未初始化', 'error');
+      
+      // 确保模态框显示
+      if (modalOverlay.style.display !== 'flex') {
+        modalOverlay.style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('显示定时任务设置失败:', error);
+      this.showNotification('显示定时任务设置失败: ' + error.message, 'error');
     }
   }
 
@@ -1131,7 +1154,7 @@ class ScriptManager {
 // 初始化应用
 const scriptManager = new ScriptManager();
 const taskManager = new TaskManager();
-const app = new ScriptManagerApp();
 
-// 将taskManager添加到全局，方便其他组件使用
+// 将实例添加到全局，方便其他组件使用
+window.scriptManager = scriptManager;
 window.taskManager = taskManager;

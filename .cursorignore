@@ -1,10 +1,20 @@
 # Dependencies - 忽略node_modules以提高性能
 node_modules/
+.npm/
+jspm_packages/
+*.tgz
+.yarn-integrity
 
 # Build outputs - 忽略构建产物
 dist/
 build/
 out/
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.snap
 
 # Logs - 忽略日志文件
 *.log
@@ -15,15 +25,42 @@ logs/
 *.temp
 *.bak
 *.backup
+temp/
+.nyc_output/
+coverage/
 
 # OS files - 忽略系统文件
 .DS_Store
 Thumbs.db
 desktop.ini
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+.AppleDouble
+.LSOverride
+*.lnk
 
 # IDE files - 忽略其他IDE配置
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 应用程序特定文件
+userData/
+app/data/*.backup
+定时任务*.md
+v*.md
+测试*.md
 
 # Memory bank - 保留memory bank用于AI上下文
 # memory-bank/
