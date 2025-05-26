@@ -219,7 +219,7 @@ body {
 .category-nav {
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
-  padding: 0 24px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -228,14 +228,14 @@ body {
 
 .category-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .category-tab {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 6px;
+  padding: 10px 12px;
   border: none;
   background: none;
   color: var(--text-secondary);
@@ -263,10 +263,10 @@ body {
 
 .tab-count {
   background: rgba(255, 255, 255, 0.2);
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 10px;
   font-size: 12px;
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
 }
 
@@ -566,12 +566,14 @@ body {
   line-height: 1;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .modal-close:hover {
@@ -746,19 +748,19 @@ body {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .app-header {
-    padding: 12px 16px;
+    padding: 10px 16px;
     flex-wrap: wrap;
-    gap: 12px;
   }
 
   .header-center {
     order: 3;
-    flex-basis: 100%;
-    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 10px 0 0;
   }
 
   .category-nav {
-    padding: 0 16px;
+    padding: 0 8px;
     overflow-x: auto;
   }
 
@@ -767,8 +769,9 @@ body {
   }
 
   .scripts-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    padding: 0;
     gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
   .script-card {
@@ -778,22 +781,29 @@ body {
   .status-bar {
     padding: 8px 16px;
     flex-direction: column;
-    gap: 8px;
     align-items: flex-start;
+    gap: 8px;
+  }
+
+  .modal {
+    width: 95%;
+    max-width: 450px;
   }
 }
 
 @media (max-width: 480px) {
   .scripts-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
   }
 
   .category-tabs {
-    gap: 2px;
+    gap: 1px;
   }
 
   .category-tab {
-    padding: 10px 12px;
+    padding: 8px 10px;
+    gap: 4px;
     font-size: 13px;
   }
 }
@@ -881,4 +891,36 @@ input[type="radio"] {
   height: 24px;
   vertical-align: middle;
   margin-right: 8px;
+}
+
+/* 确认对话框样式 */
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px;
+}
+
+.confirm-message {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-color);
+  white-space: pre-line; /* 保留换行符 */
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .confirm-message {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
 }

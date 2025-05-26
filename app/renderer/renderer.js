@@ -4,6 +4,39 @@
  */
 
 class ScriptManager {
+  // 脚本类型常量定义
+  static SCRIPT_TYPES = {
+    PYTHON: 'python',
+    JAVASCRIPT: 'javascript',
+    TYPESCRIPT: 'typescript',
+    BATCH: 'batch',
+    POWERSHELL: 'powershell',
+    BASH: 'bash',
+    OTHER: 'other'
+  };
+
+  // 扩展名到类型的映射
+  static FILE_EXTENSIONS = {
+    py: 'python',
+    js: 'javascript',
+    ts: 'typescript',
+    bat: 'batch',
+    cmd: 'batch',
+    ps1: 'powershell',
+    sh: 'bash'
+  };
+
+  // 类型到显示名称的映射
+  static TYPE_DISPLAYS = {
+    python: 'Python',
+    javascript: 'JavaScript',
+    typescript: 'TypeScript',
+    batch: '批处理',
+    powershell: 'PowerShell',
+    bash: 'Bash',
+    other: '其他'
+  };
+
   constructor() {
     this.scripts = new Map();
     this.currentCategory = 'all';
@@ -106,7 +139,10 @@ class ScriptManager {
     this.elements.countAll = document.getElementById('count-all');
     this.elements.countPython = document.getElementById('count-python');
     this.elements.countJavascript = document.getElementById('count-javascript');
+    this.elements.countTypescript = document.getElementById('count-typescript');
     this.elements.countBatch = document.getElementById('count-batch');
+    this.elements.countPowershell = document.getElementById('count-powershell');
+    this.elements.countBash = document.getElementById('count-bash');
     this.elements.countOther = document.getElementById('count-other');
   }
 
@@ -311,18 +347,16 @@ class ScriptManager {
 
     // 按分类过滤
     if (this.currentCategory !== 'all') {
-      scripts = scripts.filter(script => {
-        const type = this.normalizeScriptType(script.type);
-        return type === this.currentCategory;
-      });
+      scripts = scripts.filter(script => script.type === this.currentCategory);
     }
 
     // 按搜索关键词过滤
     if (this.searchQuery) {
+      const query = this.searchQuery.toLowerCase();
       scripts = scripts.filter(script => {
-        return script.name.toLowerCase().includes(this.searchQuery) ||
-               script.description?.toLowerCase().includes(this.searchQuery) ||
-               script.path.toLowerCase().includes(this.searchQuery);
+        return script.name.toLowerCase().includes(query) ||
+               script.description?.toLowerCase().includes(query) ||
+               script.path.toLowerCase().includes(query);
       });
     }
 
@@ -509,28 +543,34 @@ class ScriptManager {
   }
 
   updateCategoryCounts() {
+    // 初始化所有类型的计数为0
     const counts = {
-      all: this.scripts.size,
-      python: 0,
-      javascript: 0,
-      batch: 0,
-      other: 0
+      all: this.scripts.size
     };
+    
+    // 为每种类型初始化计数
+    Object.values(ScriptManager.SCRIPT_TYPES).forEach(type => {
+      counts[type] = 0;
+    });
 
+    // 统计每种类型的脚本数量
     this.scripts.forEach(script => {
-      const type = this.normalizeScriptType(script.type);
+      const type = script.type || ScriptManager.SCRIPT_TYPES.OTHER;
       if (counts.hasOwnProperty(type)) {
         counts[type]++;
       } else {
-        counts.other++;
+        counts[ScriptManager.SCRIPT_TYPES.OTHER]++;
       }
     });
 
-    // 更新显示
+    // 更新UI显示
     if (this.elements.countAll) this.elements.countAll.textContent = counts.all;
     if (this.elements.countPython) this.elements.countPython.textContent = counts.python;
     if (this.elements.countJavascript) this.elements.countJavascript.textContent = counts.javascript;
+    if (this.elements.countTypescript) this.elements.countTypescript.textContent = counts.typescript;
     if (this.elements.countBatch) this.elements.countBatch.textContent = counts.batch;
+    if (this.elements.countPowershell) this.elements.countPowershell.textContent = counts.powershell;
+    if (this.elements.countBash) this.elements.countBash.textContent = counts.bash;
     if (this.elements.countOther) this.elements.countOther.textContent = counts.other;
   }
 
@@ -602,7 +642,7 @@ class ScriptManager {
       const script = this.scripts.get(scriptId);
       if (!script) return;
 
-      const confirmed = confirm(`确定要删除脚本 "${script.name}" 吗？`);
+      const confirmed = await this.showConfirmDialog('确认删除', `确定要删除脚本 "${script.name}" 吗？`);
       if (!confirmed) return;
 
       const result = await window.electronAPI.deleteScript(scriptId);
@@ -918,6 +958,33 @@ class ScriptManager {
         return;
       }
 
+      // 检查是否已存在相同路径的脚本
+      const existingScript = Array.from(this.scripts.values()).find(s => s.path === path);
+      if (existingScript) {
+        const confirmUpdate = await this.showConfirmDialog('确认更新', `已存在路径为 "${path}" 的脚本。\n\n是否更新现有脚本？`);
+        if (confirmUpdate) {
+          // 更新现有脚本
+          return await this.handleEditScript(existingScript.id, {
+            name,
+            path,
+            type,
+            description
+          });
+        } else {
+          return; // 用户取消操作
+        }
+      }
+
+      // 检查文件扩展名与选择的类型是否匹配
+      const detectedType = this.detectScriptType(path);
+      if (detectedType !== type && detectedType !== ScriptManager.SCRIPT_TYPES.OTHER) {
+        const confirmWrongType = await this.showConfirmDialog('类型不匹配', `您选择的脚本类型 "${this.getScriptTypeDisplay(type)}" 与文件扩展名不匹配。\n\n文件扩展名表明这可能是 "${this.getScriptTypeDisplay(detectedType)}" 脚本。\n\n是否继续使用选择的类型？`);
+        if (!confirmWrongType) {
+          document.getElementById('script-type').value = detectedType;
+          return;
+        }
+      }
+
       const scriptData = {
         name,
         path,
@@ -944,25 +1011,35 @@ class ScriptManager {
     }
   }
 
-  async handleEditScript(scriptId) {
+  async handleEditScript(scriptId, customData = null) {
     try {
-      const name = document.getElementById('script-name').value.trim();
-      const path = document.getElementById('script-path').value.trim();
-      const type = document.getElementById('script-type').value;
-      const description = document.getElementById('script-description').value.trim();
+      let scriptData;
+      
+      // 如果提供了自定义数据，使用它；否则从表单获取数据
+      if (customData) {
+        scriptData = {
+          ...customData,
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        const name = document.getElementById('script-name').value.trim();
+        const path = document.getElementById('script-path').value.trim();
+        const type = document.getElementById('script-type').value;
+        const description = document.getElementById('script-description').value.trim();
 
-      if (!name || !path || !type) {
-        this.showNotification('请填写所有必填字段', 'warning');
-        return;
+        if (!name || !path || !type) {
+          this.showNotification('请填写所有必填字段', 'warning');
+          return;
+        }
+
+        scriptData = {
+          name,
+          path,
+          type,
+          description,
+          updatedAt: new Date().toISOString()
+        };
       }
-
-      const scriptData = {
-        name,
-        path,
-        type,
-        description,
-        updatedAt: new Date().toISOString()
-      };
 
       const result = await window.electronAPI.updateScript(scriptId, scriptData);
 
@@ -973,7 +1050,7 @@ class ScriptManager {
 
         this.renderScripts();
         this.hideModal();
-        this.showNotification(`脚本 "${name}" 更新成功`, 'success');
+        this.showNotification(`脚本 "${scriptData.name}" 更新成功`, 'success');
       } else {
         throw new Error(result.error);
       }
@@ -1197,42 +1274,12 @@ class ScriptManager {
   }
 
   getScriptTypeDisplay(type) {
-    const displays = {
-      python: 'Python',
-      javascript: 'JavaScript',
-      typescript: 'TypeScript',
-      batch: '批处理',
-      powershell: 'PowerShell',
-      bash: 'Bash',
-      other: '其他'
-    };
-    return displays[type] || '未知';
-  }
-
-  normalizeScriptType(type) {
-    const normalized = {
-      js: 'javascript',
-      ts: 'typescript',
-      bat: 'batch',
-      cmd: 'batch',
-      ps1: 'powershell',
-      sh: 'bash'
-    };
-    return normalized[type] || type;
+    return ScriptManager.TYPE_DISPLAYS[type] || '未知';
   }
 
   detectScriptType(filePath) {
     const ext = filePath.split('.').pop()?.toLowerCase();
-    const typeMap = {
-      py: 'python',
-      js: 'javascript',
-      ts: 'typescript',
-      bat: 'batch',
-      cmd: 'batch',
-      ps1: 'powershell',
-      sh: 'bash'
-    };
-    return typeMap[ext] || 'other';
+    return ScriptManager.FILE_EXTENSIONS[ext] || ScriptManager.SCRIPT_TYPES.OTHER;
   }
 
   isScriptFile(fileName) {
@@ -1253,6 +1300,26 @@ class ScriptManager {
   async addScriptFromFile(filePath) {
     const name = filePath.split(/[/\\]/).pop().replace(/\.[^/.]+$/, '');
     const type = this.detectScriptType(filePath);
+
+    // 检查是否已存在相同路径的脚本
+    const existingScript = Array.from(this.scripts.values()).find(s => s.path === filePath);
+    if (existingScript) {
+      const confirmUpdate = await this.showConfirmDialog('确认更新', `已存在路径为 "${filePath}" 的脚本。\n\n是否更新现有脚本？`);
+      if (confirmUpdate) {
+        // 更新现有脚本
+        const scriptData = {
+          name,
+          path: filePath,
+          type,
+          description: existingScript.description || `从文件导入: ${filePath}`,
+          updatedAt: new Date().toISOString()
+        };
+        
+        return await this.handleEditScript(existingScript.id, scriptData);
+      } else {
+        return; // 用户取消操作
+      }
+    }
 
     const scriptData = {
       name,
@@ -1276,6 +1343,50 @@ class ScriptManager {
     } catch (error) {
       this.showNotification('导入脚本失败: ' + error.message, 'error');
     }
+  }
+
+  /**
+   * 显示自定义确认对话框
+   * @param {string} title - 对话框标题
+   * @param {string} message - 确认消息
+   * @param {string} confirmText - 确认按钮文本
+   * @param {string} cancelText - 取消按钮文本
+   * @returns {Promise<boolean>} - 用户选择结果
+   */
+  showConfirmDialog(title, message, confirmText = '确定', cancelText = '取消') {
+    return new Promise((resolve) => {
+      // 设置模态框标题和内容
+      this.elements.modalTitle.textContent = title;
+      
+      // 创建确认对话框内容
+      const confirmContent = document.createElement('div');
+      confirmContent.className = 'confirm-dialog';
+      confirmContent.innerHTML = `
+        <div class="confirm-message">${message}</div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">${cancelText}</button>
+          <button type="button" class="btn btn-primary" id="confirm-ok-btn">${confirmText}</button>
+        </div>
+      `;
+      
+      // 清空并添加新内容
+      this.elements.modalBody.innerHTML = '';
+      this.elements.modalBody.appendChild(confirmContent);
+      
+      // 设置按钮事件
+      document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+        this.hideModal();
+        resolve(false);
+      });
+      
+      document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+        this.hideModal();
+        resolve(true);
+      });
+      
+      // 显示模态框
+      this.showModal();
+    });
   }
 }
 

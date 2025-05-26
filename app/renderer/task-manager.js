@@ -830,7 +830,14 @@ class TaskManager {
    * 删除任务
    */
   async deleteTask(taskId) {
-    if (!confirm('确定要删除这个任务吗？')) return;
+    // 使用ScriptManager的确认对话框
+    if (window.scriptManager) {
+      const confirmed = await window.scriptManager.showConfirmDialog('确认删除', '确定要删除这个任务吗？');
+      if (!confirmed) return;
+    } else {
+      // 降级到原生确认框
+      if (!confirm('确定要删除这个任务吗？')) return;
+    }
 
     try {
       const result = await window.electronAPI.deleteTask(taskId);
