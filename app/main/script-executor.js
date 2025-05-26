@@ -33,16 +33,28 @@ class ScriptExecutor {
 
         finalCmd = 'cmd';
         finalArgs = ['/c', 'start', `"${scriptData.name}"`, '/D', path.dirname(absoluteScriptPath), absoluteCommand.cmd, ...absoluteCommand.args];
+      } else if (process.platform === 'darwin') {
+        // macOS: 使用 Terminal.app 在新窗口中启动脚本
+        const absoluteScriptPath = path.resolve(scriptData.path);
+        const absoluteCommand = this.getScriptCommand(scriptData.type, absoluteScriptPath);
+
+        // 构建要在终端中执行的命令
+        const terminalCommand = `cd "${path.dirname(absoluteScriptPath)}" && ${absoluteCommand.cmd} ${absoluteCommand.args.join(' ')}`;
+
+        finalCmd = 'osascript';
+        finalArgs = ['-e', `tell application "Terminal" to do script "${terminalCommand.replace(/"/g, '\\"')}"`];
       } else {
-        // 其他平台: 直接启动
-        finalCmd = command.cmd;
-        finalArgs = command.args;
+        // Linux: 尝试使用常见的终端模拟器
+        const absoluteScriptPath = path.resolve(scriptData.path);
+        const absoluteCommand = this.getScriptCommand(scriptData.type, absoluteScriptPath);
+
+        // 尝试使用 gnome-terminal，如果不存在则直接执行
+        finalCmd = 'gnome-terminal';
+        finalArgs = ['--', 'bash', '-c', `cd "${path.dirname(absoluteScriptPath)}" && ${absoluteCommand.cmd} ${absoluteCommand.args.join(' ')}; read -p "Press Enter to continue..."`];
       }
 
-      // 确定工作目录
-      const workingDir = process.platform === 'win32'
-        ? path.dirname(path.resolve(scriptData.path))
-        : path.dirname(scriptData.path);
+      // 确定工作目录 - 统一使用绝对路径
+      const workingDir = path.dirname(path.resolve(scriptData.path));
 
       const childProcess = spawn(finalCmd, finalArgs, {
         detached: true,   // 独立进程

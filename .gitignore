@@ -108,3 +108,12 @@ v*.md
 # Internal documentation (not for public repo)
 GITHUB_SETUP.md
 memory-bank/
+BUILD.md
+PORTABLE_FIX.md
+PORTABLE_NO_EXAMPLES.md
+macOS_compatibility_analysis.md
+
+# Analysis and development files
+*_analysis.md
+*_fix.md
+*_compatibility*.md

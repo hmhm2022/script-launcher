@@ -180,13 +180,13 @@ class ScriptManagerApp {
       // 获取设置
       const settingResult = await this.settingsManager.getSetting('minimizeToTray');
       const minimizeToTray = settingResult.success && settingResult.value === true;
-      
+
       if (minimizeToTray && !app.isQuitting) {
         event.preventDefault();
         this.mainWindow.hide();
         return false;
       }
-      
+
       // 只有在真正关闭窗口时才设置为 null
       if (app.isQuitting) {
       this.mainWindow = null;
@@ -283,16 +283,12 @@ class ScriptManagerApp {
     // 文件管理相关IPC
     ipcMain.handle('browse-file', async () => {
       try {
+        // 根据平台设置文件过滤器
+        const filters = this.getFileFiltersForPlatform();
+
         const result = await dialog.showOpenDialog(this.mainWindow, {
           properties: ['openFile'],
-          filters: [
-            { name: 'Python脚本', extensions: ['py'] },
-            { name: 'JavaScript脚本', extensions: ['js'] },
-            { name: 'TypeScript脚本', extensions: ['ts'] },
-            { name: 'Batch脚本', extensions: ['bat', 'cmd'] },
-            { name: 'PowerShell脚本', extensions: ['ps1'] },
-            { name: '所有文件', extensions: ['*'] }
-          ]
+          filters: filters
         });
 
         if (!result.canceled && result.filePaths.length > 0) {
@@ -423,7 +419,7 @@ class ScriptManagerApp {
     // 创建托盘图标
     const nativeImage = require('electron').nativeImage;
     let trayIcon;
-    
+
     try {
       // 首先尝试使用小尺寸图标（16x16 或 32x32 最适合托盘）
       let iconPath;
@@ -434,9 +430,9 @@ class ScriptManagerApp {
         // 其他平台使用 32x32 图标
         iconPath = path.join(__dirname, 'assets/icon-32.png');
       }
-      
+
       console.log('尝试加载托盘图标:', iconPath);
-      
+
       if (fs.existsSync(iconPath)) {
         console.log('图标文件存在，正在加载...');
         trayIcon = nativeImage.createFromPath(iconPath);
@@ -455,7 +451,7 @@ class ScriptManagerApp {
       }
     } catch (error) {
       console.error('加载托盘图标失败:', error);
-      
+
       // 如果加载失败，创建一个简单的图标
       try {
         console.log('创建备用图标...');
@@ -473,10 +469,16 @@ class ScriptManagerApp {
         trayIcon = nativeImage.createEmpty();
       }
     }
-    
+
     // 创建托盘
     console.log('创建系统托盘...');
     this.tray = new Tray(trayIcon);
+
+    // 在 macOS 上设置为模板图标以获得更好的系统集成
+    if (process.platform === 'darwin') {
+      this.tray.setTemplateImage(true);
+    }
+
     this.tray.setToolTip('脚本管理器');
     console.log('托盘创建成功');
 
@@ -520,6 +522,33 @@ class ScriptManagerApp {
       }
     });
     console.log('托盘点击事件设置完成');
+  }
+
+  getFileFiltersForPlatform() {
+    const baseFilters = [
+      { name: 'Python脚本', extensions: ['py'] },
+      { name: 'JavaScript脚本', extensions: ['js'] },
+      { name: 'TypeScript脚本', extensions: ['ts'] },
+      { name: 'Shell脚本', extensions: ['sh'] }
+    ];
+
+    if (process.platform === 'win32') {
+      // Windows 平台添加特有的脚本类型
+      baseFilters.push(
+        { name: 'Batch脚本', extensions: ['bat', 'cmd'] },
+        { name: 'PowerShell脚本', extensions: ['ps1'] }
+      );
+    } else if (process.platform === 'darwin') {
+      // macOS 平台添加特有的脚本类型
+      baseFilters.push(
+        { name: 'macOS脚本', extensions: ['command', 'tool'] }
+      );
+    }
+
+    // 添加所有文件选项
+    baseFilters.push({ name: '所有文件', extensions: ['*'] });
+
+    return baseFilters;
   }
 }
 

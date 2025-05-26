@@ -1,10 +1,14 @@
 # Scripts Manager
 
-一个轻量级桌面脚本管理工具，基于Electron构建，用于管理和启动各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell等）。
+一个轻量级桌面脚本管理工具，基于 Electron 构建，用于管理和启动各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell 等）。
+
+[![Version](https://img.shields.io/badge/version-1.3.5-blue.svg)](https://github.com/your-repo/scripts-manager)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#系统要求)
 
 ## 功能特点
 
-- 🖥️ **原生桌面应用**: 基于Electron，提供原生桌面体验
+- 🖥️ **原生桌面应用**: 基于 Electron，提供原生桌面体验
 - 🚀 **脚本启动器**: 点击即启动，脚本在独立窗口中运行
 - 📁 **多脚本类型支持**: Python、JavaScript、TypeScript、Batch、PowerShell、Bash
 - 🎨 **现代化界面**: 卡片网格布局，类似应用商店体验
@@ -12,7 +16,10 @@
 - 📂 **文件浏览**: 内置文件选择器，方便添加脚本
 - 🏷️ **分类管理**: 按脚本类型自动分类和过滤
 - ⏰ **定时任务**: 轻量级任务调度器，支持间隔、每日、每周执行
+- 🌍 **跨平台支持**: Windows、macOS、Linux 全平台兼容
 - 🚀 **绿色便携**: 支持打包为便携版可执行文件
+- 🌙 **深色主题**: 支持浅色/深色主题切换
+- 🔔 **系统托盘**: 最小化到系统托盘，后台运行
 
 ## 项目结构
 
@@ -23,32 +30,55 @@ scripts-manager/
 │   │   ├── script-manager.js    # 脚本数据管理
 │   │   ├── script-executor.js   # 脚本启动引擎
 │   │   ├── task-scheduler.js    # 定时任务调度器
-│   │   └── file-manager.js      # 文件系统操作
+│   │   ├── file-manager.js      # 文件系统操作
+│   │   └── settings-manager.js  # 设置管理
 │   ├── renderer/          # 渲染进程（界面）
 │   │   ├── index.html     # 主界面
 │   │   ├── styles.css     # 样式文件
-│   │   └── renderer.js    # 前端逻辑
+│   │   ├── renderer.js    # 前端逻辑
+│   │   └── task-manager.js      # 任务管理界面
 │   └── data/              # 数据存储
 │       ├── scripts.json   # 脚本数据文件
-│       └── tasks.json     # 定时任务数据文件
-├── example_scripts/       # 示例脚本
-│   ├── hello.py          # Python示例
-│   └── hello.js          # JavaScript示例
-├── memory-bank/          # 项目文档和记忆库
-├── main.js               # Electron主进程入口
+│       ├── tasks.json     # 定时任务数据文件
+│       └── settings.json  # 应用设置文件
+├── assets/               # 资源文件
+│   ├── icon-*.png        # 应用图标（多尺寸）
+│   ├── icon.ico          # Windows 图标
+│   └── icon.svg          # 矢量图标
+├── example_scripts/      # 示例脚本
+│   ├── hello.py          # Python 示例
+│   └── hello.js          # JavaScript 示例
+├── main.js               # Electron 主进程入口
 ├── preload.js            # 预加载脚本
 ├── package.json          # 项目配置
+├── CHANGELOG.md          # 更新日志
 └── README.md             # 项目说明
 ```
 
+## 系统要求
+
+- **Windows**: Windows 10/11 (x64)
+- **macOS**: macOS 10.14+ (支持 Intel 和 Apple Silicon)
+- **Linux**: 大多数现代发行版 (x64)
+
 ## 安装和运行
 
-### 前提条件
+### 方式一：下载预编译版本（推荐）
 
+1. 前往 [Releases](https://github.com/your-repo/scripts-manager/releases) 页面
+2. 下载对应平台的文件：
+   - **Windows**: `ScriptsManager-1.3.5-portable.exe` (便携版) 或 `ScriptsManager-1.3.5-setup.exe` (安装版)
+   - **macOS**: `ScriptsManager-1.3.5.dmg`
+   - **Linux**: `ScriptsManager-1.3.5.AppImage`
+3. 运行下载的文件即可使用
+
+### 方式二：开发环境运行
+
+#### 前提条件
 - Node.js (v16+)
 - npm
 
-### 开发环境运行
+#### 步骤
 
 1. **克隆项目**
    ```bash
@@ -73,11 +103,20 @@ scripts-manager/
 ### 打包分发
 
 ```bash
-# 构建应用
-npm run build
+# Windows 便携版
+npm run build-portable
 
-# 生成便携版
-npm run dist
+# Windows 安装程序
+npm run build-installer
+
+# macOS DMG
+npm run build-mac
+
+# Linux AppImage
+npm run build-linux
+
+# 构建所有平台
+npm run dist-all
 ```
 
 ## 使用说明
@@ -105,12 +144,35 @@ npm run dist
 
 ### 支持的脚本类型
 
-- **Python** (.py): 需要安装Python环境
-- **JavaScript** (.js): 使用Node.js执行
-- **TypeScript** (.ts): 需要安装ts-node
-- **Batch** (.bat/.cmd): Windows批处理文件
-- **PowerShell** (.ps1): PowerShell脚本
-- **Bash** (.sh): Bash脚本（需要WSL或Git Bash）
+| 脚本类型 | 扩展名 | Windows | macOS | Linux | 运行环境要求 |
+|---------|--------|---------|-------|-------|-------------|
+| **Python** | `.py` | ✅ | ✅ | ✅ | Python 3.x |
+| **JavaScript** | `.js` | ✅ | ✅ | ✅ | Node.js |
+| **TypeScript** | `.ts` | ✅ | ✅ | ✅ | ts-node |
+| **Batch** | `.bat`, `.cmd` | ✅ | ❌ | ❌ | Windows 内置 |
+| **PowerShell** | `.ps1` | ✅ | ✅ | ✅ | PowerShell Core |
+| **Bash** | `.sh` | ✅* | ✅ | ✅ | Bash Shell |
+| **macOS 脚本** | `.command`, `.tool` | ❌ | ✅ | ❌ | macOS 内置 |
+
+> *Windows 上的 Bash 脚本需要 WSL、Git Bash 或 Cygwin 环境
+
+### 平台特性
+
+#### Windows
+- 脚本在新的 CMD 窗口中启动
+- 支持 Batch 和 PowerShell 脚本
+- 便携版无需安装，绿色运行
+
+#### macOS
+- 脚本在 Terminal.app 中启动
+- 支持 `.command` 和 `.tool` 文件
+- 原生 DMG 安装包
+- 支持 Intel 和 Apple Silicon
+
+#### Linux
+- 脚本在终端模拟器中启动
+- AppImage 格式，无需安装
+- 支持大多数现代发行版
 
 ## 技术架构
 
@@ -176,26 +238,33 @@ npm run dev
 # 在开发者工具的Console标签页查看
 ```
 
-## 项目历史
+## 版本历史
 
-本项目经历了重大重构和品牌升级：
+### 最新版本 v1.3.5
+- 🍎 **macOS 兼容性全面增强**
+- 🖥️ 新增系统托盘功能
+- 🎛️ 优化设置页面布局
+- 🔧 改进跨平台脚本执行
 
-- **v0.x**: Web版本（前后端分离）
-- **v1.0**: Electron桌面客户端版本（执行监控器）
-- **v1.1.1**: 重构为脚本启动器，现代化界面
-- **v1.2.1**: 新增定时任务功能
-- **v1.2.2**: 修复便携版数据持久化问题
-- **v1.3.0**: 品牌统一为"Scripts Manager"，优化国际化支持（当前版本）
+### 主要里程碑
+- **v1.3.x**: 系统托盘、跨平台优化、品牌统一
+- **v1.2.x**: 定时任务功能、便携版优化
+- **v1.1.x**: 重构为脚本启动器，现代化界面
+- **v1.0.x**: Electron 桌面客户端版本
+- **v0.x**: Web 版本（前后端分离）
 
-重构带来的改进：
-- 从脚本执行监控器转变为脚本启动器
-- 现代化卡片网格界面
-- 脚本在独立窗口中运行
-- 完善的右键菜单交互系统
-- 脚本运行状态跟踪
-- 优化的搜索和分类体验
-- 轻量级定时任务功能
-- 更好的用户体验和稳定性
+### 核心改进
+- ✨ 从脚本执行监控器转变为脚本启动器
+- 🎨 现代化卡片网格界面
+- 🖥️ 脚本在独立窗口中运行
+- 🖱️ 完善的右键菜单交互系统
+- 📊 脚本运行状态跟踪
+- 🔍 优化的搜索和分类体验
+- ⏰ 轻量级定时任务功能
+- 🌍 全平台兼容性支持
+- 🎯 更好的用户体验和稳定性
+
+详细更新日志请查看 [CHANGELOG.md](CHANGELOG.md)
 
 ## 贡献指南
 

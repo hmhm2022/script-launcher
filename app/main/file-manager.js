@@ -3,17 +3,35 @@ const path = require('path');
 
 class FileManager {
   constructor() {
-    this.supportedExtensions = ['.py', '.js', '.ts', '.bat', '.cmd', '.ps1', '.sh'];
+    // 基础支持的脚本类型
+    this.baseSupportedExtensions = ['.py', '.js', '.ts', '.sh'];
+    // 根据平台设置支持的扩展名
+    this.supportedExtensions = this.getSupportedExtensionsForPlatform();
+  }
+
+  getSupportedExtensionsForPlatform() {
+    const base = [...this.baseSupportedExtensions];
+
+    if (process.platform === 'win32') {
+      // Windows 平台添加特有的脚本类型
+      return [...base, '.bat', '.cmd', '.ps1'];
+    } else if (process.platform === 'darwin') {
+      // macOS 平台添加特有的脚本类型
+      return [...base, '.command', '.tool'];
+    } else {
+      // Linux 和其他平台
+      return base;
+    }
   }
 
   async validateFile(filePath) {
     try {
       // 检查文件是否存在
       await fs.access(filePath);
-      
+
       // 获取文件信息
       const stats = await fs.stat(filePath);
-      
+
       if (!stats.isFile()) {
         return { success: false, error: '指定路径不是文件' };
       }
@@ -21,15 +39,15 @@ class FileManager {
       // 获取文件扩展名和类型
       const ext = path.extname(filePath).toLowerCase();
       const scriptType = this.getScriptTypeByExtension(ext);
-      
+
       // 获取文件大小
       const fileSize = stats.size;
-      
+
       // 检查文件是否过大（超过10MB）
       if (fileSize > 10 * 1024 * 1024) {
-        return { 
-          success: false, 
-          error: '文件过大（超过10MB），可能不是脚本文件' 
+        return {
+          success: false,
+          error: '文件过大（超过10MB），可能不是脚本文件'
         };
       }
 
@@ -62,7 +80,9 @@ class FileManager {
       '.bat': 'batch',
       '.cmd': 'batch',
       '.ps1': 'powershell',
-      '.sh': 'bash'
+      '.sh': 'bash',
+      '.command': 'bash',  // macOS 可执行脚本
+      '.tool': 'bash'      // macOS 工具脚本
     };
 
     return typeMap[extension.toLowerCase()] || 'other';
@@ -71,12 +91,12 @@ class FileManager {
   async browseDirectory(dirPath) {
     try {
       const items = await fs.readdir(dirPath, { withFileTypes: true });
-      
+
       const result = await Promise.all(
         items.map(async (item) => {
           const fullPath = path.join(dirPath, item.name);
           const stats = await fs.stat(fullPath);
-          
+
           return {
             name: item.name,
             path: fullPath,
@@ -138,13 +158,13 @@ class FileManager {
       } = options;
 
       const results = [];
-      
+
       await this.searchFilesRecursive(
-        searchPath, 
-        pattern, 
-        results, 
-        recursive, 
-        includeHidden, 
+        searchPath,
+        pattern,
+        results,
+        recursive,
+        includeHidden,
         fileTypesOnly
       );
 
@@ -164,7 +184,7 @@ class FileManager {
   async searchFilesRecursive(dirPath, pattern, results, recursive, includeHidden, fileTypes) {
     try {
       const items = await fs.readdir(dirPath, { withFileTypes: true });
-      
+
       for (const item of items) {
         // 跳过隐藏文件（如果不包含隐藏文件）
         if (!includeHidden && item.name.startsWith('.')) {
@@ -175,7 +195,7 @@ class FileManager {
 
         if (item.isFile()) {
           const ext = path.extname(item.name).toLowerCase();
-          
+
           // 检查文件类型
           if (fileTypes.length > 0 && !fileTypes.includes(ext)) {
             continue;
@@ -196,11 +216,11 @@ class FileManager {
         } else if (item.isDirectory() && recursive) {
           // 递归搜索子目录
           await this.searchFilesRecursive(
-            fullPath, 
-            pattern, 
-            results, 
-            recursive, 
-            includeHidden, 
+            fullPath,
+            pattern,
+            results,
+            recursive,
+            includeHidden,
             fileTypes
           );
         }
@@ -215,7 +235,7 @@ class FileManager {
     try {
       const backupPath = `${filePath}.backup.${Date.now()}`;
       await fs.copyFile(filePath, backupPath);
-      
+
       return {
         success: true,
         backupPath: backupPath
@@ -233,7 +253,7 @@ class FileManager {
     if (path.isAbsolute(inputPath)) {
       return inputPath;
     }
-    
+
     return path.resolve(process.cwd(), inputPath);
   }
 
@@ -247,4 +267,4 @@ class FileManager {
   }
 }
 
-module.exports = FileManager; 
+module.exports = FileManager;

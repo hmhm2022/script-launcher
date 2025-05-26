@@ -13,6 +13,9 @@ function main() {
     console.log("=".repeat(50));
     console.log("测试成功!");
     console.log("=".repeat(50));
+    
+    // 添加无限循环
+    setTimeout(main, 1000); // 每秒执行一次
 }
 
 main();
