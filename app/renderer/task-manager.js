@@ -559,6 +559,11 @@ class TaskManager {
         this.showNotification('任务创建成功', 'success');
         // 返回任务管理界面并刷新列表
         this.showTaskManager();
+        
+        // 刷新脚本管理器的脚本卡片，显示最新的定时任务状态
+        if (window.scriptManager) {
+          window.scriptManager.refreshScripts();
+        }
       } else {
         this.showNotification('创建任务失败: ' + result.error, 'error');
       }
@@ -579,6 +584,11 @@ class TaskManager {
       if (result.success) {
         this.showNotification(`任务已${task.enabled ? '禁用' : '启用'}`, 'success');
         this.refreshTaskList();
+        
+        // 刷新脚本管理器的脚本卡片，显示最新的定时任务状态
+        if (window.scriptManager) {
+          window.scriptManager.refreshScripts();
+        }
       } else {
         this.showNotification('操作失败: ' + result.error, 'error');
       }
@@ -816,6 +826,11 @@ class TaskManager {
         this.showNotification('任务修改成功', 'success');
         // 返回任务管理界面并刷新列表
         this.showTaskManager();
+        
+        // 刷新脚本管理器的脚本卡片，显示最新的定时任务状态
+        if (window.scriptManager) {
+          window.scriptManager.refreshScripts();
+        }
       } else {
         this.showNotification('修改任务失败: ' + result.error, 'error');
       }
@@ -844,6 +859,11 @@ class TaskManager {
       if (result.success) {
         this.showNotification('任务已删除', 'success');
         this.refreshTaskList();
+        
+        // 刷新脚本管理器的脚本卡片，显示最新的定时任务状态
+        if (window.scriptManager) {
+          window.scriptManager.refreshScripts();
+        }
       } else {
         this.showNotification('删除失败: ' + result.error, 'error');
       }

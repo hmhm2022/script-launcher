@@ -110,10 +110,26 @@ class TaskScheduler {
    */
   async createTask(taskData) {
     try {
+      // 如果没有提供任务名称，尝试使用脚本文件名
+      let taskName = taskData.name;
+      if (!taskName) {
+        // 获取脚本数据
+        const scriptData = await this.getScriptData(taskData.scriptId);
+        if (scriptData && scriptData.path) {
+          // 从路径中提取文件名作为任务名称
+          taskName = this.getFileNameFromPath(scriptData.path);
+        }
+        
+        // 如果仍然无法获取名称，使用默认命名方式
+        if (!taskName) {
+          taskName = `脚本${taskData.scriptId}的定时任务`;
+        }
+      }
+
       const task = {
         id: this.generateTaskId(),
         scriptId: taskData.scriptId,
-        name: taskData.name || `脚本${taskData.scriptId}的定时任务`,
+        name: taskName,
         schedule: taskData.schedule, // { type: 'interval', value: 3600000 } 或 { type: 'daily', time: '09:00' }
         enabled: true,
         createdAt: new Date().toISOString(),
@@ -375,6 +391,19 @@ class TaskScheduler {
    */
   generateTaskId() {
     return `task_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  /**
+   * 从文件路径中提取文件名（不包括扩展名）
+   */
+  getFileNameFromPath(filePath) {
+    if (!filePath) return '';
+    
+    // 提取文件名（带扩展名）
+    const fileName = path.basename(filePath);
+    
+    // 去除扩展名
+    return path.parse(fileName).name;
   }
 
   /**

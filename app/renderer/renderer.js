@@ -392,20 +392,28 @@ class ScriptManager {
 
     // 获取定时任务信息
     const taskInfo = await this.getScriptTaskInfo(script.id);
+    
+    // 确保描述内容不为空
+    const description = script.description || '暂无描述';
+
+    let timerInfoHtml = '';
+    if (taskInfo.hasTask) {
+      timerInfoHtml = `
+        <div class="card-timer-info">
+          <span class="timer-icon">⏰</span>
+          <span class="timer-text">${taskInfo.scheduleText}</span>
+        </div>
+      `;
+    }
 
     card.innerHTML = `
       <div class="card-icon">${icon}</div>
       <div class="card-title" title="${script.name}">${script.name}</div>
       <div class="card-type">${typeDisplay}</div>
-      <div class="card-description" title="${script.description || '暂无描述'}">${script.description || '暂无描述'}</div>
-      ${taskInfo.hasTask ? `
-        <div class="card-timer-info">
-          <span class="timer-icon">⏰</span>
-          <span class="timer-text">${taskInfo.scheduleText}</span>
-        </div>
-      ` : ''}
+      <div class="card-description" title="${description}">${description}</div>
       <div class="card-footer">
         <div class="card-status">就绪</div>
+        ${timerInfoHtml}
         <div class="card-actions">
           <button class="card-action-btn" title="启动">▶</button>
           <button class="card-action-btn" title="编辑">✎</button>
