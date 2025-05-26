@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const os = require('os');
 const { exec: execCommand } = require('child_process');
 
@@ -92,6 +93,7 @@ const SettingsManager = require('./app/main/settings-manager');
 class ScriptManagerApp {
   constructor() {
     this.mainWindow = null;
+    this.tray = null;
     this.scriptManager = new ScriptManager();
     this.scriptExecutor = new ScriptExecutor();
     this.fileManager = new FileManager();
@@ -105,7 +107,13 @@ class ScriptManagerApp {
     // 当Electron完成初始化时创建窗口
     app.whenReady().then(() => {
       this.createWindow();
+      this.createTray();
       this.setupIPC();
+    });
+
+    // 添加退出前的处理逻辑
+    app.on('before-quit', () => {
+      app.isQuitting = true;
     });
 
     // 当所有窗口关闭时退出应用（macOS除外）
@@ -146,7 +154,7 @@ class ScriptManagerApp {
       title: '脚本管理器',
       show: false, // 先隐藏，加载完成后显示
       autoHideMenuBar: true, // 隐藏菜单栏
-      icon: path.join(__dirname, 'assets/icon.png'), // 应用图标（如果存在）
+      icon: path.join(__dirname, 'assets/icon.png'), // 使用新的图标
       frame: true,
       resizable: true,
       maximizable: true,
@@ -168,8 +176,21 @@ class ScriptManagerApp {
     }
 
     // 处理窗口关闭事件
-    this.mainWindow.on('closed', () => {
+    this.mainWindow.on('close', async (event) => {
+      // 获取设置
+      const settingResult = await this.settingsManager.getSetting('minimizeToTray');
+      const minimizeToTray = settingResult.success && settingResult.value === true;
+      
+      if (minimizeToTray && !app.isQuitting) {
+        event.preventDefault();
+        this.mainWindow.hide();
+        return false;
+      }
+      
+      // 只有在真正关闭窗口时才设置为 null
+      if (app.isQuitting) {
       this.mainWindow = null;
+      }
     });
   }
 
@@ -396,6 +417,109 @@ class ScriptManagerApp {
         return { success: false, error: error.message };
       }
     });
+  }
+
+  createTray() {
+    // 创建托盘图标
+    const nativeImage = require('electron').nativeImage;
+    let trayIcon;
+    
+    try {
+      // 首先尝试使用小尺寸图标（16x16 或 32x32 最适合托盘）
+      let iconPath;
+      if (process.platform === 'win32') {
+        // Windows 平台优先使用 16x16 图标
+        iconPath = path.join(__dirname, 'assets/icon-16.png');
+      } else {
+        // 其他平台使用 32x32 图标
+        iconPath = path.join(__dirname, 'assets/icon-32.png');
+      }
+      
+      console.log('尝试加载托盘图标:', iconPath);
+      
+      if (fs.existsSync(iconPath)) {
+        console.log('图标文件存在，正在加载...');
+        trayIcon = nativeImage.createFromPath(iconPath);
+        console.log('成功加载托盘图标');
+      } else {
+        // 如果小尺寸图标不存在，尝试使用标准图标
+        iconPath = path.join(__dirname, 'assets/icon.png');
+        if (fs.existsSync(iconPath)) {
+          console.log('使用标准图标:', iconPath);
+          trayIcon = nativeImage.createFromPath(iconPath);
+          // 调整大小以适合托盘
+          trayIcon = trayIcon.resize({ width: 16, height: 16 });
+        } else {
+          throw new Error('找不到任何图标文件');
+        }
+      }
+    } catch (error) {
+      console.error('加载托盘图标失败:', error);
+      
+      // 如果加载失败，创建一个简单的图标
+      try {
+        console.log('创建备用图标...');
+        const emptyIcon = nativeImage.createEmpty();
+        emptyIcon.addRepresentation({
+          width: 16,
+          height: 16,
+          buffer: Buffer.alloc(16 * 16 * 4, 255),  // 创建一个16x16的白色图标
+          scaleFactor: 1.0
+        });
+        trayIcon = emptyIcon;
+        console.log('成功创建备用图标');
+      } catch (finalErr) {
+        console.error('创建备用图标失败:', finalErr);
+        trayIcon = nativeImage.createEmpty();
+      }
+    }
+    
+    // 创建托盘
+    console.log('创建系统托盘...');
+    this.tray = new Tray(trayIcon);
+    this.tray.setToolTip('脚本管理器');
+    console.log('托盘创建成功');
+
+    // 创建托盘菜单
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '显示窗口',
+        click: () => {
+          if (this.mainWindow) {
+            this.mainWindow.show();
+          } else {
+            this.createWindow();
+          }
+        }
+      },
+      {
+        label: '退出',
+        click: () => {
+          app.isQuitting = true;
+          app.quit();
+        }
+      }
+    ]);
+
+    this.tray.setContextMenu(contextMenu);
+    console.log('托盘菜单设置完成');
+
+    // 点击托盘图标显示窗口
+    this.tray.on('click', () => {
+      if (this.mainWindow) {
+        if (this.mainWindow.isVisible()) {
+          if (this.mainWindow.isMinimized()) {
+            this.mainWindow.restore();
+          }
+        } else {
+          this.mainWindow.show();
+        }
+        this.mainWindow.focus();
+      } else {
+        this.createWindow();
+      }
+    });
+    console.log('托盘点击事件设置完成');
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "scripts-manager",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Scripts Manager - 轻量级脚本管理工具",
   "main": "main.js",
   "scripts": {
@@ -27,7 +27,8 @@
   "devDependencies": {
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "sharp": "^0.34.2"
   },
   "dependencies": {
     "iconv-lite": "^0.6.3"
@@ -42,10 +43,13 @@
       "main.js",
       "preload.js",
       "app/**/*",
+      "assets/**/*",
       "node_modules/**/*",
       "package.json"
     ],
+    "icon": "assets/icon-256.png",
     "win": {
+      "icon": "assets/icon-256.png",
       "target": [
         {
           "target": "portable",
@@ -72,6 +76,7 @@
       "uninstallDisplayName": "Scripts Manager"
     },
     "linux": {
+      "icon": "assets/icon-256.png",
       "target": [
         {
           "target": "AppImage",
@@ -82,6 +87,7 @@
       ]
     },
     "mac": {
+      "icon": "assets/icon-256.png",
       "target": [
         {
           "target": "dmg",

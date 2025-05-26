@@ -729,10 +729,12 @@ class ScriptManager {
       const themeSelect = document.getElementById('theme-select');
       const autoRefresh = document.getElementById('auto-refresh');
       const showNotifications = document.getElementById('show-notifications');
+      const minimizeToTray = document.getElementById('minimize-to-tray');
       
       if (themeSelect) themeSelect.value = this.settings.theme || 'light';
       if (autoRefresh) autoRefresh.checked = this.settings.autoRefresh !== false;
       if (showNotifications) showNotifications.checked = this.settings.showNotifications !== false;
+      if (minimizeToTray) minimizeToTray.checked = this.settings.minimizeToTray === true;
     }
     
     this.setupSettingsModalEvents();
@@ -862,6 +864,13 @@ class ScriptManager {
           <label class="checkbox-label">
           <input type="checkbox" id="show-notifications" checked>
             <span>显示启动通知</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+          <input type="checkbox" id="minimize-to-tray">
+            <span>关闭时最小化到托盘</span>
           </label>
         </div>
 
@@ -1010,6 +1019,22 @@ class ScriptManager {
         this.updateStatistics();
         this.hideModal();
         this.showNotification(`脚本 "${name}" 添加成功`, 'success');
+        
+        // 为新添加的脚本卡片添加特效
+        setTimeout(() => {
+          const newCard = document.querySelector(`[data-script-id="${result.script.id}"]`);
+          if (newCard) {
+            newCard.classList.add('new-card');
+            
+            // 滚动到新卡片位置
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 5秒后移除特效
+            setTimeout(() => {
+              newCard.classList.remove('new-card');
+            }, 5000);
+          }
+        }, 100); // 短暂延迟确保DOM已更新
       } else {
         throw new Error(result.error);
       }
@@ -1106,11 +1131,13 @@ class ScriptManager {
       const themeSelect = document.getElementById('theme-select');
       const autoRefresh = document.getElementById('auto-refresh');
       const showNotifications = document.getElementById('show-notifications');
+      const minimizeToTray = document.getElementById('minimize-to-tray');
       
       const newSettings = {
         theme: themeSelect.value,
         autoRefresh: autoRefresh.checked,
-        showNotifications: showNotifications.checked
+        showNotifications: showNotifications.checked,
+        minimizeToTray: minimizeToTray.checked
       };
       
       // 保存设置
@@ -1306,7 +1333,17 @@ class ScriptManager {
   }
 
   async addScriptFromFile(filePath) {
-    const name = filePath.split(/[/\\]/).pop().replace(/\.[^/.]+$/, '');
+    try {
+      if (!filePath || !this.isScriptFile(filePath)) {
+        this.showNotification('不支持的文件类型', 'warning');
+        return;
+      }
+
+      // 提取文件名和扩展名
+      const fileName = filePath.split(/[\\/]/).pop();
+      const name = fileName.split('.')[0];
+      
+      // 检测脚本类型
     const type = this.detectScriptType(filePath);
 
     // 检查是否已存在相同路径的脚本
@@ -1316,7 +1353,7 @@ class ScriptManager {
       if (confirmUpdate) {
         // 更新现有脚本
         const scriptData = {
-          name,
+            name: existingScript.name,
           path: filePath,
           type,
           description: existingScript.description || `从文件导入: ${filePath}`,
@@ -1329,6 +1366,7 @@ class ScriptManager {
       }
     }
 
+      // 创建新脚本
     const scriptData = {
       name,
       path: filePath,
@@ -1338,17 +1376,34 @@ class ScriptManager {
       usageCount: 0
     };
 
-    try {
       const result = await window.electronAPI.saveScript(scriptData);
+
       if (result.success) {
         this.scripts.set(result.script.id, result.script);
         this.renderScripts();
         this.updateStatistics();
         this.showNotification(`脚本 "${name}" 导入成功`, 'success');
+        
+        // 为新添加的脚本卡片添加特效
+        setTimeout(() => {
+          const newCard = document.querySelector(`[data-script-id="${result.script.id}"]`);
+          if (newCard) {
+            newCard.classList.add('new-card');
+            
+            // 滚动到新卡片位置
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 5秒后移除特效
+            setTimeout(() => {
+              newCard.classList.remove('new-card');
+            }, 5000);
+          }
+        }, 100); // 短暂延迟确保DOM已更新
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
+      console.error('导入脚本失败:', error);
       this.showNotification('导入脚本失败: ' + error.message, 'error');
     }
   }

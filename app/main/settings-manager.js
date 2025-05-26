@@ -56,6 +56,7 @@ class SettingsManager {
       language: 'zh-CN',
       autoCleanup: true,
       maxProcesses: 10,
+      minimizeToTray: false,
       updatedAt: new Date().toISOString()
     };
   }

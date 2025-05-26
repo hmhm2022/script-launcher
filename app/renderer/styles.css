@@ -323,6 +323,40 @@ body {
   height: 220px; /* 固定卡片高度 */
 }
 
+/* 新添加的脚本卡片特效 */
+.script-card.new-card {
+  animation: highlight-new-card 2s ease-in-out;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 15px var(--primary-color);
+}
+
+@keyframes highlight-new-card {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 5px var(--primary-color);
+  }
+  10% {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px var(--primary-color);
+  }
+  20% {
+    transform: scale(1);
+    box-shadow: 0 0 15px var(--primary-color);
+  }
+  30% {
+    transform: scale(1.02);
+    box-shadow: 0 0 18px var(--primary-color);
+  }
+  40% {
+    transform: scale(1);
+    box-shadow: 0 0 15px var(--primary-color);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 5px var(--primary-color);
+  }
+}
+
 .script-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px var(--shadow-color);
