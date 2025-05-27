@@ -117,3 +117,7 @@ macOS_compatibility_analysis.md
 *_analysis.md
 *_fix.md
 *_compatibility*.md
+
+# Additional ignored files
+.cursorignore
+example_scripts/test_warning.py
