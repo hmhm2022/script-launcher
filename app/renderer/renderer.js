@@ -681,7 +681,22 @@ class ScriptManager {
       const script = this.scripts.get(scriptId);
       if (!script) return;
 
-      const confirmed = await this.showConfirmDialog('确认删除', `确定要删除脚本 "${script.name}" 吗？`);
+      // 查询相关的定时任务
+      let taskInfo = '';
+      try {
+        const taskResult = await window.electronAPI.getTasksByScript(scriptId);
+        if (taskResult.success && taskResult.tasks.length > 0) {
+          taskInfo = `\n\n同时将删除 ${taskResult.tasks.length} 个相关的定时任务。`;
+        }
+      } catch (error) {
+        console.warn('查询相关任务失败:', error);
+        // 继续执行删除，不因为查询任务失败而中断
+      }
+
+      const confirmed = await this.showConfirmDialog(
+        '确认删除',
+        `确定要删除脚本 "${script.name}" 吗？${taskInfo}`
+      );
       if (!confirmed) return;
 
       const result = await window.electronAPI.deleteScript(scriptId);
@@ -690,7 +705,14 @@ class ScriptManager {
         this.scripts.delete(scriptId);
         this.renderScripts();
         this.updateStatistics();
-        this.showNotification(`脚本 "${script.name}" 已删除`, 'success');
+
+        // 构建删除成功的消息
+        let successMessage = `脚本 "${script.name}" 已删除`;
+        if (result.taskCleanup && result.taskCleanup.deletedCount > 0) {
+          successMessage += `，同时清理了 ${result.taskCleanup.deletedCount} 个相关任务`;
+        }
+
+        this.showNotification(successMessage, 'success');
       } else {
         throw new Error(result.error);
       }

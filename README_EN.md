@@ -2,7 +2,7 @@
 
 A lightweight desktop script management tool built with Electron for managing, launching, and scheduling various types of scripts (Python, JavaScript, TypeScript, Batch, PowerShell, etc.), featuring scheduled task functionality similar to Qinglong Panel.
 
-[![Version](https://img.shields.io/badge/version-1.3.7-blue.svg)](https://github.com/hmhm2022/scripts-manager)
+[![Version](https://img.shields.io/badge/version-1.3.8-blue.svg)](https://github.com/hmhm2022/scripts-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#system-requirements)
 

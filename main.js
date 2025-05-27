@@ -282,7 +282,20 @@ class ScriptManagerApp {
 
     ipcMain.handle('delete-script', async (event, scriptId) => {
       try {
-        return await this.scriptManager.deleteScript(scriptId);
+        // 先删除脚本
+        const scriptResult = await this.scriptManager.deleteScript(scriptId);
+        if (!scriptResult.success) {
+          return scriptResult;
+        }
+
+        // 删除脚本成功后，清理相关的定时任务
+        const taskResult = await this.taskScheduler.deleteTasksByScript(scriptId);
+
+        return {
+          success: true,
+          message: '脚本删除成功',
+          taskCleanup: taskResult
+        };
       } catch (error) {
         console.error('删除脚本失败:', error);
         return { success: false, error: error.message };

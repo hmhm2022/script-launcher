@@ -119,7 +119,7 @@ class TaskScheduler {
           // 从路径中提取文件名作为任务名称
           taskName = this.getFileNameFromPath(scriptData.path);
         }
-        
+
         // 如果仍然无法获取名称，使用默认命名方式
         if (!taskName) {
           taskName = `脚本${taskData.scriptId}的定时任务`;
@@ -199,6 +199,45 @@ class TaskScheduler {
     } catch (error) {
       console.error('TaskScheduler: 删除任务失败:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * 删除指定脚本的所有相关任务
+   */
+  async deleteTasksByScript(scriptId) {
+    try {
+      const tasksToDelete = [];
+
+      // 查找所有相关任务
+      this.tasks.forEach(task => {
+        if (task.scriptId === scriptId) {
+          tasksToDelete.push(task);
+        }
+      });
+
+      // 删除找到的任务
+      let deletedCount = 0;
+      for (const task of tasksToDelete) {
+        this.unscheduleTask(task.id);
+        this.tasks.delete(task.id);
+        deletedCount++;
+        console.log(`TaskScheduler: 删除脚本 ${scriptId} 的任务: ${task.name}`);
+      }
+
+      // 保存更改
+      if (deletedCount > 0) {
+        await this.saveTasks();
+      }
+
+      return {
+        success: true,
+        deletedCount,
+        message: `已删除 ${deletedCount} 个相关任务`
+      };
+    } catch (error) {
+      console.error('TaskScheduler: 删除脚本任务失败:', error);
+      return { success: false, error: error.message, deletedCount: 0 };
     }
   }
 
@@ -398,10 +437,10 @@ class TaskScheduler {
    */
   getFileNameFromPath(filePath) {
     if (!filePath) return '';
-    
+
     // 提取文件名（带扩展名）
     const fileName = path.basename(filePath);
-    
+
     // 去除扩展名
     return path.parse(fileName).name;
   }
