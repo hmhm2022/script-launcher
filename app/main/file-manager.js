@@ -4,7 +4,7 @@ const path = require('path');
 class FileManager {
   constructor() {
     // 基础支持的脚本类型
-    this.baseSupportedExtensions = ['.py', '.js', '.ts', '.sh'];
+    this.baseSupportedExtensions = ['.py', '.pyw', '.js', '.ts', '.sh'];
     // 根据平台设置支持的扩展名
     this.supportedExtensions = this.getSupportedExtensionsForPlatform();
   }
@@ -75,6 +75,7 @@ class FileManager {
   getScriptTypeByExtension(extension) {
     const typeMap = {
       '.py': 'python',
+      '.pyw': 'python',
       '.js': 'javascript',
       '.ts': 'typescript',
       '.bat': 'batch',

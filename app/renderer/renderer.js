@@ -18,6 +18,7 @@ class ScriptManager {
   // 扩展名到类型的映射
   static FILE_EXTENSIONS = {
     py: 'python',
+    pyw: 'python',
     js: 'javascript',
     ts: 'typescript',
     bat: 'batch',
@@ -130,6 +131,7 @@ class ScriptManager {
     this.elements.contextEdit = document.getElementById('context-edit');
     this.elements.contextSchedule = document.getElementById('context-schedule');
     this.elements.contextCopy = document.getElementById('context-copy');
+    this.elements.contextOpenFolder = document.getElementById('context-open-folder');
     this.elements.contextDelete = document.getElementById('context-delete');
 
     // 通知容器
@@ -190,11 +192,12 @@ class ScriptManager {
       this.hideModal();
     });
 
-    this.elements.modalOverlay?.addEventListener('click', (e) => {
-      if (e.target === this.elements.modalOverlay) {
-        this.hideModal();
-      }
-    });
+    // 注释掉点击外部区域关闭弹窗的功能
+    // this.elements.modalOverlay?.addEventListener('click', (e) => {
+    //   if (e.target === this.elements.modalOverlay) {
+    //     this.hideModal();
+    //   }
+    // });
 
     // 右键菜单
     this.elements.contextLaunch?.addEventListener('click', () => {
@@ -214,6 +217,13 @@ class ScriptManager {
     this.elements.contextCopy?.addEventListener('click', () => {
       if (this.selectedScript) {
         this.copyScriptPath(this.selectedScript);
+      }
+      this.hideContextMenu();
+    });
+
+    this.elements.contextOpenFolder?.addEventListener('click', () => {
+      if (this.selectedScript) {
+        this.openScriptFolder(this.selectedScript);
       }
       this.hideContextMenu();
     });
@@ -392,7 +402,7 @@ class ScriptManager {
 
     // 获取定时任务信息
     const taskInfo = await this.getScriptTaskInfo(script.id);
-    
+
     // 确保描述内容不为空
     const description = script.description || '暂无描述';
 
@@ -428,13 +438,13 @@ class ScriptManager {
   }
 
   setupCardEventListeners(card, script) {
-    // 点击卡片启动脚本
+    // 点击卡片不再启动脚本（根据用户要求移除此功能）
     card.addEventListener('click', (e) => {
       // 如果点击的是按钮，不触发卡片点击
       if (e.target.classList.contains('card-action-btn')) {
         return;
       }
-      this.launchScript(script.id);
+      // this.launchScript(script.id); // 已移除：左键点击不再运行脚本
     });
 
     // 右键菜单
@@ -555,7 +565,7 @@ class ScriptManager {
     const counts = {
       all: this.scripts.size
     };
-    
+
     // 为每种类型初始化计数
     Object.values(ScriptManager.SCRIPT_TYPES).forEach(type => {
       counts[type] = 0;
@@ -645,6 +655,27 @@ class ScriptManager {
     }
   }
 
+  async openScriptFolder(scriptId) {
+    try {
+      const script = this.scripts.get(scriptId);
+      if (!script) {
+        this.showNotification('脚本不存在', 'error');
+        return;
+      }
+
+      const result = await window.electronAPI.openScriptFolder(script.path);
+
+      if (result.success) {
+        this.showNotification('已打开脚本所在文件夹', 'success');
+      } else {
+        this.showNotification('打开文件夹失败: ' + result.error, 'error');
+      }
+    } catch (error) {
+      console.error('打开文件夹失败:', error);
+      this.showNotification('打开文件夹失败: ' + error.message, 'error');
+    }
+  }
+
   async deleteScript(scriptId) {
     try {
       const script = this.scripts.get(scriptId);
@@ -678,21 +709,21 @@ class ScriptManager {
         this.showNotification('无效的脚本ID', 'error');
         return;
       }
-      
+
       if (!window.taskManager) {
         this.showNotification('定时任务功能未初始化', 'error');
         return;
       }
-      
+
       // 确保模态框已准备好
       const modalOverlay = document.getElementById('modal-overlay');
       if (!modalOverlay) {
         this.showNotification('模态框元素未找到', 'error');
         return;
       }
-      
+
       await window.taskManager.showTaskSettingsForScript(scriptId);
-      
+
       // 确保模态框显示
       if (modalOverlay.style.display !== 'flex') {
         modalOverlay.style.display = 'flex';
@@ -723,20 +754,20 @@ class ScriptManager {
   showSettingsModal() {
     this.elements.modalTitle.textContent = '设置';
     this.elements.modalBody.innerHTML = this.getSettingsModalContent();
-    
+
     // 设置表单值
     if (this.settings) {
       const themeSelect = document.getElementById('theme-select');
       const autoRefresh = document.getElementById('auto-refresh');
       const showNotifications = document.getElementById('show-notifications');
       const minimizeToTray = document.getElementById('minimize-to-tray');
-      
+
       if (themeSelect) themeSelect.value = this.settings.theme || 'light';
       if (autoRefresh) autoRefresh.checked = this.settings.autoRefresh !== false;
       if (showNotifications) showNotifications.checked = this.settings.showNotifications !== false;
       if (minimizeToTray) minimizeToTray.checked = this.settings.minimizeToTray === true;
     }
-    
+
     this.setupSettingsModalEvents();
     this.showModal();
   }
@@ -1019,16 +1050,16 @@ class ScriptManager {
         this.updateStatistics();
         this.hideModal();
         this.showNotification(`脚本 "${name}" 添加成功`, 'success');
-        
+
         // 为新添加的脚本卡片添加特效
         setTimeout(() => {
           const newCard = document.querySelector(`[data-script-id="${result.script.id}"]`);
           if (newCard) {
             newCard.classList.add('new-card');
-            
+
             // 滚动到新卡片位置
             newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // 5秒后移除特效
             setTimeout(() => {
               newCard.classList.remove('new-card');
@@ -1047,7 +1078,7 @@ class ScriptManager {
   async handleEditScript(scriptId, customData = null) {
     try {
       let scriptData;
-      
+
       // 如果提供了自定义数据，使用它；否则从表单获取数据
       if (customData) {
         scriptData = {
@@ -1096,7 +1127,7 @@ class ScriptManager {
   async loadSettings() {
     try {
       const result = await window.electronAPI.loadSettings();
-      
+
       if (result.success) {
         this.settings = result.settings;
         console.log('设置加载成功:', this.settings);
@@ -1120,7 +1151,7 @@ class ScriptManager {
 
     // 应用主题
     document.documentElement.setAttribute('data-theme', this.settings.theme);
-    
+
     // 其他设置应用逻辑可以在这里添加
     console.log('已应用设置');
   }
@@ -1132,17 +1163,17 @@ class ScriptManager {
       const autoRefresh = document.getElementById('auto-refresh');
       const showNotifications = document.getElementById('show-notifications');
       const minimizeToTray = document.getElementById('minimize-to-tray');
-      
+
       const newSettings = {
         theme: themeSelect.value,
         autoRefresh: autoRefresh.checked,
         showNotifications: showNotifications.checked,
         minimizeToTray: minimizeToTray.checked
       };
-      
+
       // 保存设置
       const result = await window.electronAPI.saveSettings(newSettings);
-      
+
       if (result.success) {
         this.settings = result.settings;
         this.applySettings();
@@ -1318,7 +1349,7 @@ class ScriptManager {
   }
 
   isScriptFile(fileName) {
-    const scriptExtensions = ['.py', '.js', '.ts', '.bat', '.cmd', '.ps1', '.sh'];
+    const scriptExtensions = ['.py', '.pyw', '.js', '.ts', '.bat', '.cmd', '.ps1', '.sh'];
     return scriptExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
   }
 
@@ -1342,7 +1373,7 @@ class ScriptManager {
       // 提取文件名和扩展名
       const fileName = filePath.split(/[\\/]/).pop();
       const name = fileName.split('.')[0];
-      
+
       // 检测脚本类型
     const type = this.detectScriptType(filePath);
 
@@ -1359,7 +1390,7 @@ class ScriptManager {
           description: existingScript.description || `从文件导入: ${filePath}`,
           updatedAt: new Date().toISOString()
         };
-        
+
         return await this.handleEditScript(existingScript.id, scriptData);
       } else {
         return; // 用户取消操作
@@ -1383,16 +1414,16 @@ class ScriptManager {
         this.renderScripts();
         this.updateStatistics();
         this.showNotification(`脚本 "${name}" 导入成功`, 'success');
-        
+
         // 为新添加的脚本卡片添加特效
         setTimeout(() => {
           const newCard = document.querySelector(`[data-script-id="${result.script.id}"]`);
           if (newCard) {
             newCard.classList.add('new-card');
-            
+
             // 滚动到新卡片位置
             newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // 5秒后移除特效
             setTimeout(() => {
               newCard.classList.remove('new-card');
@@ -1420,7 +1451,7 @@ class ScriptManager {
     return new Promise((resolve) => {
       // 设置模态框标题和内容
       this.elements.modalTitle.textContent = title;
-      
+
       // 创建确认对话框内容
       const confirmContent = document.createElement('div');
       confirmContent.className = 'confirm-dialog';
@@ -1431,22 +1462,22 @@ class ScriptManager {
           <button type="button" class="btn btn-primary" id="confirm-ok-btn">${confirmText}</button>
         </div>
       `;
-      
+
       // 清空并添加新内容
       this.elements.modalBody.innerHTML = '';
       this.elements.modalBody.appendChild(confirmContent);
-      
+
       // 设置按钮事件
       document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
         this.hideModal();
         resolve(false);
       });
-      
+
       document.getElementById('confirm-ok-btn').addEventListener('click', () => {
         this.hideModal();
         resolve(true);
       });
-      
+
       // 显示模态框
       this.showModal();
     });

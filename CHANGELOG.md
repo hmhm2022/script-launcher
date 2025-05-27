@@ -1,5 +1,45 @@
 # 更新日志
 
+## [1.3.7] - 2025-05-27
+
+### 新增
+- 🔒 **单实例应用限制**
+  - 确保同时只能运行一个脚本管理器实例
+  - 尝试启动第二个实例时自动激活现有窗口
+  - 跨平台支持，防止数据冲突和资源竞争
+- 📁 **右键菜单增强**
+  - 新增"打开文件夹"功能，可在系统文件管理器中快速定位脚本文件
+  - 跨平台支持：Windows(资源管理器)、macOS(Finder)、Linux(默认文件管理器)
+- 🐍 **Python脚本类型增强**
+  - 新增 `.pyw` 文件扩展名支持
+  - 将 `.pyw` 文件从"其他"类别归类为Python类型
+  - Windows平台智能执行器选择：`.py`使用python.exe，`.pyw`使用pythonw.exe（无控制台窗口）
+  - 跨平台兼容性：macOS/Linux上统一使用python命令执行.pyw文件
+
+### 改进
+- 🛡️ **用户界面安全性**
+  - 禁用模态对话框点击外部区域关闭功能，防止意外关闭重要对话框
+  - 禁用点击脚本卡片直接启动功能，防止误触发脚本执行
+  - 保留ESC键和关闭按钮的正常功能
+- � **脚本执行优化**
+  - 新增 `getPythonExecutor()` 方法智能选择Python执行器
+  - 优化GUI Python应用的执行体验（Windows上无控制台窗口干扰）
+  - 完善文件类型检测和过滤器
+- 🎯 **用户体验提升**
+  - 应用启动更加稳定，避免多实例冲突
+  - 右键菜单操作更加便捷，支持快速访问脚本所在文件夹
+  - Python开发者工作流程优化，正确处理GUI应用脚本
+
+### 技术细节
+- 在 `main.js` 中添加单实例锁定逻辑和 `activateMainWindow()` 方法
+- 在 `main.js` 中添加 `open-script-folder` IPC处理器，使用 `shell.showItemInFolder()`
+- 在 `renderer.js` 中注释掉模态对话框外部点击关闭事件监听器
+- 在 `renderer.js` 中添加右键菜单"打开文件夹"事件处理和 `openScriptFolder()` 方法
+- 在 `file-manager.js` 中添加.pyw到支持扩展名和类型映射
+- 在 `renderer.js` 中更新FILE_EXTENSIONS和脚本文件检测
+- 在 `main.js` 中添加.pyw到Python脚本文件过滤器
+- 在 `script-executor.js` 中实现智能Python执行器选择逻辑
+
 ## [1.3.6] - 2025-05-27
 
 ### 改进

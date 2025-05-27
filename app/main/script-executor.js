@@ -99,7 +99,8 @@ class ScriptExecutor {
   getScriptCommand(type, scriptPath) {
     const commands = {
       python: {
-        cmd: 'python',
+        // 根据文件扩展名选择合适的Python执行器
+        cmd: this.getPythonExecutor(scriptPath),
         args: ['-u', scriptPath]
       },
       javascript: {
@@ -134,6 +135,19 @@ class ScriptExecutor {
     }
 
     return command;
+  }
+
+  // 根据Python文件扩展名选择合适的执行器
+  getPythonExecutor(scriptPath) {
+    const ext = path.extname(scriptPath).toLowerCase();
+
+    // 在Windows上，.pyw文件使用pythonw.exe（无控制台窗口）
+    if (process.platform === 'win32' && ext === '.pyw') {
+      return 'pythonw';
+    }
+
+    // 其他情况使用标准python命令
+    return 'python';
   }
 
   // 获取已启动的进程列表

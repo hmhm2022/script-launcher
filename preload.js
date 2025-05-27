@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 文件管理API
   browseFile: () => ipcRenderer.invoke('browse-file'),
   validateFile: (filePath) => ipcRenderer.invoke('validate-file', filePath),
+  openScriptFolder: (scriptPath) => ipcRenderer.invoke('open-script-folder', scriptPath),
 
   // 定时任务API
   getTasks: () => ipcRenderer.invoke('get-tasks'),

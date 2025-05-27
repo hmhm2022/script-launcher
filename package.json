@@ -1,6 +1,6 @@
 {
   "name": "scripts-manager",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Scripts Manager - 轻量级脚本管理工具",
   "main": "main.js",
   "scripts": {

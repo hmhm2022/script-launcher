@@ -92,6 +92,17 @@ const SettingsManager = require('./app/main/settings-manager');
 
 class ScriptManagerApp {
   constructor() {
+    // 检查单实例锁定
+    const gotTheLock = app.requestSingleInstanceLock();
+
+    if (!gotTheLock) {
+      console.log('脚本管理器已在运行，退出当前实例');
+      app.quit();
+      return;
+    }
+
+    console.log('获取单实例锁成功，继续启动应用');
+
     this.mainWindow = null;
     this.tray = null;
     this.scriptManager = new ScriptManager();
@@ -104,6 +115,12 @@ class ScriptManagerApp {
   }
 
   initializeApp() {
+    // 处理第二个实例启动的情况
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      console.log('检测到第二个实例启动，激活现有窗口');
+      this.activateMainWindow();
+    });
+
     // 当Electron完成初始化时创建窗口
     app.whenReady().then(() => {
       this.createWindow();
@@ -129,6 +146,46 @@ class ScriptManagerApp {
         this.createWindow();
       }
     });
+  }
+
+  // 激活主窗口的方法
+  activateMainWindow() {
+    try {
+      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+        // 如果窗口存在但被隐藏，显示它
+        if (!this.mainWindow.isVisible()) {
+          this.mainWindow.show();
+        }
+
+        // 如果窗口被最小化，恢复它
+        if (this.mainWindow.isMinimized()) {
+          this.mainWindow.restore();
+        }
+
+        // 将窗口置于前台并获得焦点
+        this.mainWindow.focus();
+
+        // 在 Windows 上额外处理，确保窗口真正获得焦点
+        if (process.platform === 'win32') {
+          this.mainWindow.setAlwaysOnTop(true);
+          this.mainWindow.setAlwaysOnTop(false);
+        }
+
+        console.log('已激活现有的脚本管理器窗口');
+      } else {
+        // 如果窗口不存在或已被销毁，创建新窗口
+        console.log('主窗口不存在或已销毁，创建新窗口');
+        this.createWindow();
+      }
+    } catch (error) {
+      console.error('激活主窗口时发生错误:', error);
+      // 发生错误时尝试创建新窗口
+      try {
+        this.createWindow();
+      } catch (createError) {
+        console.error('创建新窗口失败:', createError);
+      }
+    }
   }
 
   createWindow() {
@@ -306,6 +363,20 @@ class ScriptManagerApp {
         return await this.fileManager.validateFile(filePath);
       } catch (error) {
         console.error('验证文件失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('open-script-folder', async (event, scriptPath) => {
+      try {
+        const { shell } = require('electron');
+
+        // 使用shell.showItemInFolder在文件管理器中显示文件
+        shell.showItemInFolder(scriptPath);
+
+        return { success: true };
+      } catch (error) {
+        console.error('打开文件夹失败:', error);
         return { success: false, error: error.message };
       }
     });
@@ -526,7 +597,7 @@ class ScriptManagerApp {
 
   getFileFiltersForPlatform() {
     const baseFilters = [
-      { name: 'Python脚本', extensions: ['py'] },
+      { name: 'Python脚本', extensions: ['py', 'pyw'] },
       { name: 'JavaScript脚本', extensions: ['js'] },
       { name: 'TypeScript脚本', extensions: ['ts'] },
       { name: 'Shell脚本', extensions: ['sh'] }

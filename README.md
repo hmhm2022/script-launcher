@@ -2,7 +2,7 @@
 
 一个轻量级桌面脚本管理工具，基于 Electron 构建，用于管理、启动和定时执行各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell 等），支持类似青龙面板的定时任务调度功能。
 
-[![Version](https://img.shields.io/badge/version-1.3.6-blue.svg)](https://github.com/hmhm2022/scripts-manager)
+[![Version](https://img.shields.io/badge/version-1.3.7-blue.svg)](https://github.com/hmhm2022/scripts-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#系统要求)
 
@@ -26,7 +26,7 @@
 ### 方式一：下载预编译版本（推荐）
 
 1. 前往 [Releases](https://github.com/hmhm2022/scripts-manager/releases) 页面
-2. 下载文件：   - **Windows**: `ScriptsManager-1.3.6-portable.exe` (便携版)
+2. 下载文件：   - **Windows**: `ScriptsManager-1.3.7-portable.exe` (便携版)
 3. 运行下载的文件即可使用
 
 ### 方式二：开发环境运行
@@ -95,7 +95,7 @@ npm run dist-all
 
 ### 脚本启动
 
-1. 点击脚本卡片
+1. 点击脚本卡片上的启动按钮（▶）或右键选择"启动脚本"
 2. 脚本将在新的控制台窗口中启动
 3. 脚本独立运行，可以关闭管理器应用
 
@@ -103,7 +103,7 @@ npm run dist-all
 
 | 脚本类型 | 扩展名 | Windows | macOS | Linux | 运行环境要求 |
 |---------|--------|---------|-------|-------|-------------|
-| **Python** | `.py` | ✅ | ✅ | ✅ | Python 3.x |
+| **Python** | `.py`, `.pyw` | ✅ | ✅ | ✅ | Python 3.x |
 | **JavaScript** | `.js` | ✅ | ✅ | ✅ | Node.js |
 | **TypeScript** | `.ts` | ✅ | ✅ | ✅ | ts-node |
 | **Batch** | `.bat`, `.cmd` | ✅ | ❌ | ❌ | Windows 内置 |

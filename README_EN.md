@@ -2,7 +2,7 @@
 
 A lightweight desktop script management tool built with Electron for managing, launching, and scheduling various types of scripts (Python, JavaScript, TypeScript, Batch, PowerShell, etc.), featuring scheduled task functionality similar to Qinglong Panel.
 
-[![Version](https://img.shields.io/badge/version-1.3.6-blue.svg)](https://github.com/hmhm2022/scripts-manager)
+[![Version](https://img.shields.io/badge/version-1.3.7-blue.svg)](https://github.com/hmhm2022/scripts-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#system-requirements)
 
@@ -26,7 +26,7 @@ A lightweight desktop script management tool built with Electron for managing, l
 ### Option 1: Download Pre-built Releases (Recommended)
 
 1. Go to [Releases](https://github.com/hmhm2022/scripts-manager/releases) page
-2. Download file:   - **Windows**: `ScriptsManager-1.3.6-portable.exe` (Portable)
+2. Download file:   - **Windows**: `ScriptsManager-1.3.7-portable.exe` (Portable)
 3. Run the downloaded file to start using
 
 ### Option 2: Development Environment
@@ -95,7 +95,7 @@ npm run dist-all
 
 ### Script Execution
 
-1. Click on a script card
+1. Click the launch button (▶) on script card or right-click and select "Launch Script"
 2. Script will launch in a new console window
 3. Scripts run independently, you can close the manager application
 
@@ -103,7 +103,7 @@ npm run dist-all
 
 | Script Type | Extensions | Windows | macOS | Linux | Runtime Requirements |
 |-------------|------------|---------|-------|-------|---------------------|
-| **Python** | `.py` | ✅ | ✅ | ✅ | Python 3.x |
+| **Python** | `.py`, `.pyw` | ✅ | ✅ | ✅ | Python 3.x |
 | **JavaScript** | `.js` | ✅ | ✅ | ✅ | Node.js |
 | **TypeScript** | `.ts` | ✅ | ✅ | ✅ | ts-node |
 | **Batch** | `.bat`, `.cmd` | ✅ | ❌ | ❌ | Windows Built-in |
