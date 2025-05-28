@@ -32,7 +32,7 @@ class ScriptManager {
     python: 'Python',
     javascript: 'JavaScript',
     typescript: 'TypeScript',
-    batch: '批处理',
+    batch: 'Batch',
     powershell: 'PowerShell',
     bash: 'Bash',
     other: '其他'
@@ -823,7 +823,7 @@ class ScriptManager {
             <option value="python">Python</option>
             <option value="javascript">JavaScript</option>
             <option value="typescript">TypeScript</option>
-            <option value="batch">批处理</option>
+            <option value="batch">Batch</option>
             <option value="powershell">PowerShell</option>
             <option value="bash">Bash</option>
             <option value="other">其他</option>
@@ -865,7 +865,7 @@ class ScriptManager {
             <option value="python" ${script.type === 'python' ? 'selected' : ''}>Python</option>
             <option value="javascript" ${script.type === 'javascript' ? 'selected' : ''}>JavaScript</option>
             <option value="typescript" ${script.type === 'typescript' ? 'selected' : ''}>TypeScript</option>
-            <option value="batch" ${script.type === 'batch' ? 'selected' : ''}>批处理</option>
+            <option value="batch" ${script.type === 'batch' ? 'selected' : ''}>Batch</option>
             <option value="powershell" ${script.type === 'powershell' ? 'selected' : ''}>PowerShell</option>
             <option value="bash" ${script.type === 'bash' ? 'selected' : ''}>Bash</option>
             <option value="other" ${script.type === 'other' ? 'selected' : ''}>其他</option>
