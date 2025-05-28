@@ -547,10 +547,16 @@ body {
 }
 
 .status-left,
+.status-center,
 .status-right {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.status-center {
+  flex: 1;
+  justify-content: center;
 }
 
 .status-item {
@@ -561,6 +567,40 @@ body {
 
 .status-icon {
   font-size: 14px;
+}
+
+/* GitHub链接和作者邮箱样式 */
+.author-email {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s ease;
+}
+
+.author-email:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.github-link:hover {
+  color: var(--text-color);
+}
+
+.github-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
 /* 模态对话框 */
@@ -842,6 +882,10 @@ body {
     gap: 8px;
   }
 
+  .status-center {
+    justify-content: flex-start;
+  }
+
   .modal {
     width: 95%;
     max-width: 450px;
@@ -974,12 +1018,12 @@ input[type="radio"] {
     font-size: 14px;
     line-height: 1.5;
   }
-  
+
   .form-actions {
     flex-direction: column-reverse;
     gap: 10px;
   }
-  
+
   .form-actions button {
     width: 100%;
   }

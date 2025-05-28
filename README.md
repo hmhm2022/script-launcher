@@ -2,7 +2,7 @@
 
 一个轻量级桌面脚本管理工具，基于 Electron 构建，用于管理、启动和定时执行各种类型的脚本（Python、JavaScript、TypeScript、Batch、PowerShell 等），支持类似青龙面板的定时任务调度功能。
 
-[![Version](https://img.shields.io/badge/version-1.3.8-blue.svg)](https://github.com/hmhm2022/scripts-manager)
+[![Version](https://img.shields.io/badge/version-1.3.9-blue.svg)](https://github.com/hmhm2022/scripts-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#系统要求)
 
@@ -20,13 +20,14 @@
 - 🚀 **绿色便携**: 支持打包为便携版可执行文件
 - 🌙 **深色主题**: 支持浅色/深色主题切换
 - 🔔 **系统托盘**: 最小化到系统托盘，后台运行
+- 📧 **联系方式**: 状态栏显示GitHub仓库链接和作者邮箱，方便反馈和支持
 
 ## 安装和运行
 
 ### 方式一：下载预编译版本（推荐）
 
 1. 前往 [Releases](https://github.com/hmhm2022/scripts-manager/releases) 页面
-2. 下载文件：   - **Windows**: `ScriptsManager-1.3.7-portable.exe` (便携版)
+2. 下载文件：   - **Windows**: `ScriptsManager-1.3.9-portable.exe` (便携版)
 3. 运行下载的文件即可使用
 
 ### 方式二：开发环境运行
@@ -188,10 +189,35 @@ npm run dist-all
 
 详细更新日志请查看 [CHANGELOG.md](CHANGELOG.md)
 
+## 鸣谢
+
+作为一个自然语言程序员，感谢以下工具和平台对本项目开发的巨大贡献：
+
+- **[Cursor](https://cursor.sh/)** - AI驱动的代码编辑器，提供了强大的AI编程辅助功能，大大提升了开发效率
+- **[Augment](https://augmentcode.com/)** - 智能代码助手平台，为项目开发提供了优秀的AI编程支持和代码优化建议
+
+这些先进的AI工具让Scripts Manager的开发过程更加高效和智能化。
 
 ## 许可证
 
-MIT License
+本项目采用 MIT License 许可证，并包含以下附加条款：
+
+### MIT License + 附加条款
+
+**基础许可**: MIT License
+
+**附加要求**: 所有修改和分发的软件版本必须在源代码、文档和其他相关材料中包含对原始仓库的清晰和显著的归属声明：
+
+> **Scripts Manager** - https://github.com/hmhm2022/scripts-manager
+
+这意味着如果您：
+- 修改本软件并重新分发
+- 基于本软件创建衍生作品
+- 在其他项目中使用本软件的代码
+
+您需要在相关材料中明确标注本项目的来源和链接。
+
+完整许可证条款请查看 [LICENSE](LICENSE) 文件。
 
 ---
 

@@ -2,7 +2,7 @@
 
 A lightweight desktop script management tool built with Electron for managing, launching, and scheduling various types of scripts (Python, JavaScript, TypeScript, Batch, PowerShell, etc.), featuring scheduled task functionality similar to Qinglong Panel.
 
-[![Version](https://img.shields.io/badge/version-1.3.8-blue.svg)](https://github.com/hmhm2022/scripts-manager)
+[![Version](https://img.shields.io/badge/version-1.3.9-blue.svg)](https://github.com/hmhm2022/scripts-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#system-requirements)
 
@@ -20,13 +20,14 @@ A lightweight desktop script management tool built with Electron for managing, l
 - 🚀 **Portable**: Support for portable executable packaging
 - 🌙 **Dark Theme**: Light/dark theme switching support
 - 🔔 **System Tray**: Minimize to system tray for background operation
+- 📧 **Contact Info**: Status bar displays GitHub repository link and author email for feedback and support
 
 ## Installation and Usage
 
 ### Option 1: Download Pre-built Releases (Recommended)
 
 1. Go to [Releases](https://github.com/hmhm2022/scripts-manager/releases) page
-2. Download file:   - **Windows**: `ScriptsManager-1.3.7-portable.exe` (Portable)
+2. Download file:   - **Windows**: `ScriptsManager-1.3.9-portable.exe` (Portable)
 3. Run the downloaded file to start using
 
 ### Option 2: Development Environment
@@ -188,9 +189,35 @@ npm run dist-all
 
 For detailed changelog, see [CHANGELOG.md](CHANGELOG.md)
 
+## Acknowledgments
+
+As a natural language coder, I would like to thank the following tools and platforms for their tremendous contributions to the development of this project:
+
+- **[Cursor](https://cursor.sh/)** - AI-powered code editor that provides powerful AI programming assistance, greatly improving development efficiency
+- **[Augment](https://augmentcode.com/)** - Intelligent code assistant platform that provides excellent AI programming support and code optimization suggestions for project development
+
+These advanced AI tools have made the development process of Scripts Manager more efficient and intelligent.
+
 ## License
 
-MIT License
+This project is licensed under the MIT License with the following additional terms:
+
+### MIT License + Additional Terms
+
+**Base License**: MIT License
+
+**Additional Requirement**: All modified and distributed versions of this software must include a clear and prominent attribution to the original repository in the source code, documentation, and any other relevant materials:
+
+> **Scripts Manager** - https://github.com/hmhm2022/scripts-manager
+
+This means if you:
+- Modify this software and redistribute it
+- Create derivative works based on this software
+- Use code from this software in other projects
+
+You must clearly indicate the source and link to this project in the relevant materials.
+
+For the complete license terms, please see the [LICENSE](LICENSE) file.
 
 ---
 

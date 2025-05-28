@@ -187,6 +187,12 @@ class ScriptManager {
       this.showSettingsModal();
     });
 
+    // GitHub链接
+    document.getElementById('github-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.openGitHubRepository();
+    });
+
     // 模态对话框关闭
     this.elements.modalClose?.addEventListener('click', () => {
       this.hideModal();
@@ -1272,6 +1278,17 @@ class ScriptManager {
     if (e.key === 'Escape') {
       this.hideModal();
       this.hideContextMenu();
+    }
+  }
+
+  // 打开GitHub仓库
+  async openGitHubRepository() {
+    try {
+      const repositoryUrl = 'https://github.com/hmhm2022/scripts-manager';
+      await window.electronAPI.openExternal(repositoryUrl);
+    } catch (error) {
+      console.error('打开GitHub仓库失败:', error);
+      this.showNotification('打开GitHub仓库失败', 'error');
     }
   }
 

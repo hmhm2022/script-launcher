@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
@@ -494,6 +494,17 @@ class ScriptManagerApp {
         return await this.settingsManager.getSetting(key);
       } catch (error) {
         console.error(`获取设置 ${key} 失败:`, error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 打开外部链接
+    ipcMain.handle('open-external', async (event, url) => {
+      try {
+        await shell.openExternal(url);
+        return { success: true };
+      } catch (error) {
+        console.error('打开外部链接失败:', error);
         return { success: false, error: error.message };
       }
     });

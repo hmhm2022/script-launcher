@@ -32,7 +32,7 @@ class ScriptExecutor {
         const absoluteCommand = this.getScriptCommand(scriptData.type, absoluteScriptPath);
 
         finalCmd = 'cmd';
-        finalArgs = ['/c', 'start', `"${scriptData.name}"`, '/D', path.dirname(absoluteScriptPath), absoluteCommand.cmd, ...absoluteCommand.args];
+        finalArgs = ['/c', 'start', '/D', path.dirname(absoluteScriptPath), absoluteCommand.cmd, ...absoluteCommand.args];
       } else if (process.platform === 'darwin') {
         // macOS: 使用 Terminal.app 在新窗口中启动脚本
         const absoluteScriptPath = path.resolve(scriptData.path);
