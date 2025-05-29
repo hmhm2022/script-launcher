@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心跳监控测试控制台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .status-display {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .log-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .log-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 心跳监控测试控制台</h1>
+
+        <div class="section">
+            <h3>📊 当前状态</h3>
+            <div class="button-group">
+                <button class="btn-primary" onclick="getHeartbeatStatus()">获取心跳状态</button>
+                <button class="btn-primary" onclick="getSchedulerStatus()">获取调度器状态</button>
+            </div>
+            <div id="status-display" class="status-display">点击按钮获取状态信息...</div>
+        </div>
+
+        <div class="section">
+            <h3>⚡ 手动测试</h3>
+            <div class="button-group">
+                <button class="btn-success" onclick="triggerHeartbeat()">立即触发心跳检查</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🚨 故障模拟</h3>
+            <div class="button-group">
+                <button class="btn-warning" onclick="simulateFailure('scheduler')">模拟调度器故障</button>
+                <button class="btn-warning" onclick="simulateFailure('python')">模拟Python环境故障</button>
+                <button class="btn-warning" onclick="simulateFailure('script-missing')">模拟脚本丢失</button>
+                <button class="btn-warning" onclick="simulateHeartbeatFailure()">模拟心跳异常</button>
+            </div>
+            <div class="button-group">
+                <button class="btn-danger" onclick="resetSimulation()">重置所有模拟故障</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔔 通知系统测试</h3>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testSystemNotification()">测试系统通知</button>
+                <button class="btn-primary" onclick="testTrayNotification()">测试托盘通知</button>
+                <button class="btn-secondary" onclick="checkNotificationPermission()">检查通知权限</button>
+                <button class="btn-warning" onclick="testUrgentNotification()">测试紧急通知</button>
+            </div>
+            <div id="notification-status" class="status-display">点击按钮测试通知功能...</div>
+        </div>
+
+        <div class="section">
+            <h3>📝 测试日志</h3>
+            <div id="test-log" class="status-display">测试日志将显示在这里...</div>
+            <button class="btn-primary" onclick="clearLog()">清空日志</button>
+        </div>
+    </div>
+
+    <script>
+        let logEntries = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logEntries.push({ message: logEntry, type });
+
+            const logDiv = document.getElementById('test-log');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = `log-entry log-${type}`;
+            entryDiv.textContent = logEntry;
+            logDiv.appendChild(entryDiv);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            logEntries = [];
+            document.getElementById('test-log').innerHTML = '测试日志将显示在这里...';
+        }
+
+        async function getHeartbeatStatus() {
+            try {
+                addLog('正在获取心跳状态...', 'info');
+                const result = await window.electronAPI.invoke('get-heartbeat-status');
+                if (result.success) {
+                    document.getElementById('status-display').textContent =
+                        JSON.stringify(result.status, null, 2);
+                    addLog('心跳状态获取成功', 'success');
+                } else {
+                    addLog(`获取心跳状态失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`获取心跳状态异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function getSchedulerStatus() {
+            try {
+                addLog('正在获取调度器状态...', 'info');
+                const result = await window.electronAPI.invoke('get-scheduler-status');
+                if (result.success) {
+                    document.getElementById('status-display').textContent =
+                        JSON.stringify(result.status, null, 2);
+                    addLog('调度器状态获取成功', 'success');
+                } else {
+                    addLog(`获取调度器状态失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`获取调度器状态异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function triggerHeartbeat() {
+            try {
+                addLog('正在触发心跳检查...', 'info');
+                const result = await window.electronAPI.invoke('trigger-heartbeat-test');
+                if (result.success) {
+                    addLog('心跳检查已触发，请查看系统通知', 'success');
+                } else {
+                    addLog(`触发心跳检查失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`触发心跳检查异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateFailure(failureType) {
+            try {
+                addLog(`正在模拟 ${failureType} 故障...`, 'warning');
+                const result = await window.electronAPI.invoke('simulate-failure', failureType);
+                if (result.success) {
+                    addLog(`${failureType} 故障模拟成功，请观察通知`, 'warning');
+                } else {
+                    addLog(`模拟故障失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`模拟故障异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function resetSimulation() {
+            try {
+                addLog('正在重置所有模拟故障...', 'info');
+                const result = await window.electronAPI.invoke('reset-simulation');
+                if (result.success) {
+                    addLog('所有模拟故障已重置', 'success');
+                } else {
+                    addLog(`重置失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`重置异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSystemNotification() {
+            try {
+                addLog('正在测试系统通知...', 'info');
+                const result = await window.electronAPI.invoke('test-system-notification');
+                if (result.success) {
+                    addLog('系统通知测试已发送，请检查是否收到通知', 'success');
+                    document.getElementById('notification-status').textContent =
+                        `通知权限: ${result.permission}, 支持状态: ${result.supported}`;
+                } else {
+                    addLog(`系统通知测试失败: ${result.error}`, 'error');
+                    document.getElementById('notification-status').textContent = result.error;
+                }
+            } catch (error) {
+                addLog(`系统通知测试异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTrayNotification() {
+            try {
+                addLog('正在测试托盘通知...', 'info');
+                const result = await window.electronAPI.invoke('test-tray-notification');
+                if (result.success) {
+                    addLog('托盘通知测试已发送，请检查托盘区域', 'success');
+                } else {
+                    addLog(`托盘通知测试失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`托盘通知测试异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkNotificationPermission() {
+            try {
+                addLog('正在检查通知权限...', 'info');
+                const result = await window.electronAPI.invoke('check-notification-permission');
+                if (result.success) {
+                    const status = `
+通知支持: ${result.supported ? '✅ 支持' : '❌ 不支持'}
+系统平台: ${result.platform}
+Electron版本: ${result.electronVersion}
+权限状态: ${result.permission || '未知'}`;
+                    document.getElementById('notification-status').textContent = status;
+                    addLog('通知权限检查完成', 'success');
+                } else {
+                    addLog(`检查通知权限失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`检查通知权限异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUrgentNotification() {
+            try {
+                addLog('正在测试紧急通知...', 'warning');
+                const result = await window.electronAPI.invoke('test-urgent-notification');
+                if (result.success) {
+                    addLog('🚨 紧急通知已发送！请立即检查通知区域！', 'warning');
+                    document.getElementById('notification-status').textContent =
+                        '🚨 紧急通知已发送，应该会强制显示！';
+                } else {
+                    addLog(`紧急通知测试失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`紧急通知测试异常: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateHeartbeatFailure() {
+            try {
+                addLog('正在模拟心跳异常...', 'error');
+                const result = await window.electronAPI.invoke('simulate-heartbeat-failure');
+                if (result.success) {
+                    addLog('💔 心跳异常已模拟！应该会触发心跳监控通知！', 'error');
+                    document.getElementById('notification-status').textContent =
+                        '💔 心跳异常已模拟，请等待心跳监控通知...';
+                } else {
+                    addLog(`模拟心跳异常失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`模拟心跳异常异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时获取初始状态
+        window.addEventListener('DOMContentLoaded', () => {
+            addLog('测试控制台已加载', 'info');
+            getHeartbeatStatus();
+        });
+    </script>
+</body>
+</html>

@@ -2,6 +2,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const { app } = require('electron');
 const os = require('os');
+const log = require('electron-log');
+const HeartbeatMonitor = require('./heartbeat-monitor');
 
 /**
  * 轻量级定时任务调度器
@@ -18,6 +20,9 @@ class TaskScheduler {
     const userDataPath = app.getPath('userData') || path.join(os.homedir(), '.script-manager');
     this.dataFile = path.join(userDataPath, 'tasks.json');
     this.isRunning = false;
+
+    // 初始化心跳监控器
+    this.heartbeatMonitor = new HeartbeatMonitor(this, scriptExecutor, scriptManager);
 
     this.init();
   }
@@ -45,18 +50,18 @@ class TaskScheduler {
           this.tasks.set(task.id, task);
         });
 
-        console.log(`TaskScheduler: 加载了 ${tasks.length} 个定时任务`);
+        log.info(`TaskScheduler: 加载了 ${tasks.length} 个定时任务`);
       } catch (error) {
         if (error.code === 'ENOENT') {
           // 文件不存在，创建空任务列表
           await this.saveTasks();
-          console.log('TaskScheduler: 创建了新的任务配置文件');
+          log.info('TaskScheduler: 创建了新的任务配置文件');
         } else {
           throw error;
         }
       }
     } catch (error) {
-      console.error('TaskScheduler: 加载任务失败:', error);
+      log.error('TaskScheduler: 加载任务失败:', error);
     }
   }
 
@@ -68,7 +73,7 @@ class TaskScheduler {
       const tasks = Array.from(this.tasks.values());
       await fs.writeFile(this.dataFile, JSON.stringify(tasks, null, 2), 'utf8');
     } catch (error) {
-      console.error('TaskScheduler: 保存任务失败:', error);
+      log.error('TaskScheduler: 保存任务失败:', error);
       throw error;
     }
   }
@@ -80,7 +85,7 @@ class TaskScheduler {
     if (this.isRunning) return;
 
     this.isRunning = true;
-    console.log('TaskScheduler: 调度器已启动');
+    log.info('TaskScheduler: 调度器已启动');
 
     // 为所有启用的任务设置定时器
     this.tasks.forEach(task => {
@@ -88,6 +93,9 @@ class TaskScheduler {
         this.scheduleTask(task);
       }
     });
+
+    // 启动心跳监控
+    this.heartbeatMonitor.start();
   }
 
   /**
@@ -102,7 +110,10 @@ class TaskScheduler {
     });
     this.timers.clear();
 
-    console.log('TaskScheduler: 调度器已停止');
+    // 停止心跳监控
+    this.heartbeatMonitor.stop();
+
+    log.info('TaskScheduler: 调度器已停止');
   }
 
   /**
@@ -147,7 +158,7 @@ class TaskScheduler {
 
       return { success: true, task };
     } catch (error) {
-      console.error('TaskScheduler: 创建任务失败:', error);
+      log.error('TaskScheduler: 创建任务失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -181,7 +192,7 @@ class TaskScheduler {
 
       return { success: true, task };
     } catch (error) {
-      console.error('TaskScheduler: 更新任务失败:', error);
+      log.error('TaskScheduler: 更新任务失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -197,7 +208,7 @@ class TaskScheduler {
 
       return { success: true };
     } catch (error) {
-      console.error('TaskScheduler: 删除任务失败:', error);
+      log.error('TaskScheduler: 删除任务失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -222,7 +233,7 @@ class TaskScheduler {
         this.unscheduleTask(task.id);
         this.tasks.delete(task.id);
         deletedCount++;
-        console.log(`TaskScheduler: 删除脚本 ${scriptId} 的任务: ${task.name}`);
+        log.info(`TaskScheduler: 删除脚本 ${scriptId} 的任务: ${task.name}`);
       }
 
       // 保存更改
@@ -236,7 +247,7 @@ class TaskScheduler {
         message: `已删除 ${deletedCount} 个相关任务`
       };
     } catch (error) {
-      console.error('TaskScheduler: 删除脚本任务失败:', error);
+      log.error('TaskScheduler: 删除脚本任务失败:', error);
       return { success: false, error: error.message, deletedCount: 0 };
     }
   }
@@ -300,7 +311,7 @@ class TaskScheduler {
     }, delay);
 
     this.timers.set(task.id, timer);
-    console.log(`TaskScheduler: 任务 ${task.name} 已调度，将在 ${nextRun.toLocaleString()} 执行`);
+    log.info(`TaskScheduler: 任务 ${task.name} 已调度，将在 ${nextRun.toLocaleString()} 执行`);
   }
 
   /**
@@ -319,7 +330,7 @@ class TaskScheduler {
    */
   async executeTask(task) {
     try {
-      console.log(`TaskScheduler: 开始执行任务 ${task.name}`);
+      log.info(`TaskScheduler: 开始执行任务 ${task.name}`);
 
       // 获取脚本信息
       const scriptData = await this.getScriptData(task.scriptId);
@@ -337,7 +348,7 @@ class TaskScheduler {
       // 执行脚本 - 使用原始脚本数据，不修改name避免Windows命令问题
       const result = await this.scriptExecutor.launchScript(task.scriptId, scriptData);
 
-      console.log(`TaskScheduler: 任务 ${task.name} 执行完成:`, result.success ? '成功' : '失败');
+      log.info(`TaskScheduler: 任务 ${task.name} 执行完成:`, result.success ? '成功' : '失败');
 
       // 重新调度下次执行
       if (task.enabled && this.isRunning) {
@@ -346,7 +357,7 @@ class TaskScheduler {
 
       return result;
     } catch (error) {
-      console.error(`TaskScheduler: 执行任务 ${task.name} 失败:`, error);
+      log.error(`TaskScheduler: 执行任务 ${task.name} 失败:`, error);
 
       // 即使执行失败也要重新调度
       if (task.enabled && this.isRunning) {
@@ -374,7 +385,7 @@ class TaskScheduler {
 
       return scripts.find(script => script.id === scriptId);
     } catch (error) {
-      console.error('获取脚本数据失败:', error);
+      log.error('获取脚本数据失败:', error);
       return null;
     }
   }
@@ -455,6 +466,49 @@ class TaskScheduler {
       activeTasks: Array.from(this.tasks.values()).filter(t => t.enabled).length,
       scheduledTasks: this.timers.size
     };
+  }
+
+  /**
+   * 设置托盘引用
+   */
+  setTray(tray) {
+    if (this.heartbeatMonitor) {
+      this.heartbeatMonitor.setTray(tray);
+    }
+  }
+
+  /**
+   * 手动触发心跳检查（测试用）
+   */
+  async triggerHeartbeatTest() {
+    if (this.heartbeatMonitor) {
+      return await this.heartbeatMonitor.triggerHeartbeatNow();
+    }
+  }
+
+  /**
+   * 模拟故障（测试用）
+   */
+  async simulateFailure(failureType) {
+    if (this.heartbeatMonitor) {
+      return await this.heartbeatMonitor.simulateFailure(failureType);
+    }
+  }
+
+  /**
+   * 重置模拟故障（测试用）
+   */
+  resetSimulation() {
+    if (this.heartbeatMonitor) {
+      this.heartbeatMonitor.resetSimulation();
+    }
+  }
+
+  /**
+   * 获取心跳监控状态
+   */
+  getHeartbeatStatus() {
+    return this.heartbeatMonitor.getHealthStatus();
   }
 }
 

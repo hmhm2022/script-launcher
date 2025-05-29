@@ -187,6 +187,15 @@ class ScriptManager {
       this.showSettingsModal();
     });
 
+    // 测试控制台按钮（仅在测试模式下显示）
+    this.elements.testConsoleBtn = document.getElementById('test-console-btn');
+    if (this.isTestMode()) {
+      this.elements.testConsoleBtn.style.display = 'block';
+      this.elements.testConsoleBtn?.addEventListener('click', () => {
+        this.openTestConsole();
+      });
+    }
+
     // GitHub链接
     document.getElementById('github-link')?.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1520,6 +1529,44 @@ class ScriptManager {
       // 显示模态框
       this.showModal();
     });
+  }
+
+  /**
+   * 检测是否为测试模式
+   */
+  isTestMode() {
+    // 检查URL参数
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('test')) {
+      return true;
+    }
+
+    // 检查是否通过IPC获取测试模式状态
+    try {
+      // 由于process.argv在渲染进程中不可用，我们通过其他方式检测
+      // 暂时总是显示测试按钮，便于测试
+      return true;
+    } catch (error) {
+      console.log('测试模式检测失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 打开测试控制台
+   */
+  async openTestConsole() {
+    try {
+      // 通过主进程创建测试控制台窗口
+      const result = await window.electronAPI.openTestConsole();
+
+      if (!result.success) {
+        this.showNotification('打开测试控制台失败: ' + result.error, 'error');
+      }
+    } catch (error) {
+      console.error('打开测试控制台失败:', error);
+      this.showNotification('打开测试控制台失败: ' + error.message, 'error');
+    }
   }
 }
 

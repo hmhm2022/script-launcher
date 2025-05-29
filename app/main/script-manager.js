@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { app } = require('electron');
 const os = require('os');
+const log = require('electron-log');
 
 class ScriptManager {
   constructor() {
@@ -25,45 +26,45 @@ class ScriptManager {
         await this.createInitialData();
       }
     } catch (error) {
-      console.error('初始化数据文件失败:', error);
+      log.error('初始化数据文件失败:', error);
     }
   }
 
   async createInitialData() {
-    console.log('ScriptManager: 创建初始脚本数据...');
+    log.info('ScriptManager: 创建初始脚本数据...');
 
     // 便携版不包含示例脚本，创建空的脚本列表
     const initialScripts = [];
 
     try {
       await fs.writeFile(this.dataFile, JSON.stringify(initialScripts, null, 2), 'utf8');
-      console.log('ScriptManager: 已成功创建初始脚本数据，包含', initialScripts.length, '个示例脚本');
+      log.info('ScriptManager: 已成功创建初始脚本数据，包含', initialScripts.length, '个示例脚本');
     } catch (error) {
-      console.error('ScriptManager: 写入初始数据失败:', error.message);
+      log.error('ScriptManager: 写入初始数据失败:', error.message);
       throw error;
     }
   }
 
   async loadScripts() {
     try {
-      console.log('ScriptManager: 开始读取脚本数据文件:', this.dataFile);
+      log.debug('ScriptManager: 开始读取脚本数据文件:', this.dataFile);
       const data = await fs.readFile(this.dataFile, 'utf8');
       const scripts = JSON.parse(data);
-      console.log('ScriptManager: 成功读取脚本数据，共', scripts.length, '个脚本');
+      log.debug('ScriptManager: 成功读取脚本数据，共', scripts.length, '个脚本');
       return { success: true, scripts };
     } catch (error) {
-      console.error('ScriptManager: 读取脚本数据失败:', error.message);
+      log.error('ScriptManager: 读取脚本数据失败:', error.message);
       // 如果文件不存在，尝试创建初始数据
       if (error.code === 'ENOENT') {
-        console.log('ScriptManager: 数据文件不存在，创建初始数据...');
+        log.info('ScriptManager: 数据文件不存在，创建初始数据...');
         try {
           await this.createInitialData();
           const data = await fs.readFile(this.dataFile, 'utf8');
           const scripts = JSON.parse(data);
-          console.log('ScriptManager: 成功创建并读取初始数据，共', scripts.length, '个脚本');
+          log.info('ScriptManager: 成功创建并读取初始数据，共', scripts.length, '个脚本');
           return { success: true, scripts };
         } catch (createError) {
-          console.error('ScriptManager: 创建初始数据失败:', createError.message);
+          log.error('ScriptManager: 创建初始数据失败:', createError.message);
           return { success: false, error: '无法创建初始数据: ' + createError.message, scripts: [] };
         }
       }
@@ -93,7 +94,7 @@ class ScriptManager {
 
       return { success: true, script: newScript };
     } catch (error) {
-      console.error('保存脚本失败:', error);
+      log.error('保存脚本失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -120,7 +121,7 @@ class ScriptManager {
 
       return { success: true, script: scripts[index] };
     } catch (error) {
-      console.error('更新脚本失败:', error);
+      log.error('更新脚本失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -138,7 +139,7 @@ class ScriptManager {
 
       return { success: true };
     } catch (error) {
-      console.error('删除脚本失败:', error);
+      log.error('删除脚本失败:', error);
       return { success: false, error: error.message };
     }
   }
@@ -148,7 +149,7 @@ class ScriptManager {
       const { scripts } = await this.loadScripts();
       return scripts.find(s => s.id === scriptId);
     } catch (error) {
-      console.error('获取脚本失败:', error);
+      log.error('获取脚本失败:', error);
       return null;
     }
   }
@@ -167,7 +168,7 @@ class ScriptManager {
 
       return { success: true, scripts: filteredScripts };
     } catch (error) {
-      console.error('搜索脚本失败:', error);
+      log.error('搜索脚本失败:', error);
       return { success: false, error: error.message, scripts: [] };
     }
   }
@@ -179,7 +180,7 @@ class ScriptManager {
 
       return { success: true, scripts: filteredScripts };
     } catch (error) {
-      console.error('按类型获取脚本失败:', error);
+      log.error('按类型获取脚本失败:', error);
       return { success: false, error: error.message, scripts: [] };
     }
   }

@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const log = require('electron-log');
 
 class ScriptExecutor {
   constructor() {
@@ -10,7 +11,7 @@ class ScriptExecutor {
   // 启动脚本（替代原来的executeScript）
   async launchScript(scriptId, scriptData) {
     try {
-      console.log(`准备启动脚本: ${scriptData.name} (${scriptId})`);
+      log.info(`准备启动脚本: ${scriptData.name} (${scriptId})`);
 
       // 验证脚本文件是否存在
       if (!fs.existsSync(scriptData.path)) {
@@ -20,7 +21,7 @@ class ScriptExecutor {
       // 根据脚本类型确定启动命令
       const command = this.getScriptCommand(scriptData.type, scriptData.path);
 
-      console.log(`启动命令: ${command.cmd} ${command.args.join(' ')}`);
+      log.debug(`启动命令: ${command.cmd} ${command.args.join(' ')}`);
 
       // 在Windows上，使用cmd /c start来在新窗口中启动脚本
       let finalCmd, finalArgs;
@@ -87,7 +88,7 @@ class ScriptExecutor {
       };
 
     } catch (error) {
-      console.error(`启动脚本异常:`, error);
+      log.error(`启动脚本异常:`, error);
       return {
         success: false,
         error: error.message
@@ -173,7 +174,7 @@ class ScriptExecutor {
       } catch (error) {
         // 进程已结束，从记录中移除
         this.launchedProcesses.delete(scriptId);
-        console.log(`清理已结束的进程记录: ${processInfo.name} (PID: ${processInfo.pid})`);
+        log.debug(`清理已结束的进程记录: ${processInfo.name} (PID: ${processInfo.pid})`);
       }
     }
   }

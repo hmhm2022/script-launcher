@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const os = require('os');
 const { exec: execCommand } = require('child_process');
+const log = require('electron-log');
 
 // 设置控制台编码为UTF-8，解决中文显示问题
 if (process.platform === 'win32') {
@@ -63,6 +64,26 @@ if (!fs.existsSync(userDataPath)) {
   fs.mkdirSync(userDataPath, { recursive: true });
 }
 
+// 配置electron-log
+const logsDir = path.join(userDataPath, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+// 配置应用日志文件
+log.transports.file.resolvePathFn = () => path.join(logsDir, 'scripts-manager.log');
+log.transports.file.level = 'info';
+log.transports.console.level = 'debug';
+
+// 配置日志格式
+log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
+log.transports.console.format = '[{h}:{i}:{s}.{ms}] [{level}] {text}';
+
+// 设置日志文件大小限制
+log.transports.file.maxSize = 10 * 1024 * 1024; // 10MB
+
+log.info('Scripts Manager 启动，日志系统已初始化');
+
 // 抑制控制台错误输出
 const originalConsoleError = console.error;
 console.error = (...args) => {
@@ -96,14 +117,15 @@ class ScriptManagerApp {
     const gotTheLock = app.requestSingleInstanceLock();
 
     if (!gotTheLock) {
-      console.log('脚本管理器已在运行，退出当前实例');
+      log.info('脚本管理器已在运行，退出当前实例');
       app.quit();
       return;
     }
 
-    console.log('获取单实例锁成功，继续启动应用');
+    log.info('获取单实例锁成功，继续启动应用');
 
     this.mainWindow = null;
+    this.testConsoleWindow = null;
     this.tray = null;
     this.scriptManager = new ScriptManager();
     this.scriptExecutor = new ScriptExecutor();
@@ -125,6 +147,12 @@ class ScriptManagerApp {
     app.whenReady().then(() => {
       this.createWindow();
       this.createTray();
+
+      // 设置托盘引用到心跳监控器
+      if (this.tray && this.taskScheduler) {
+        this.taskScheduler.setTray(this.tray);
+      }
+
       this.setupIPC();
     });
 
@@ -470,6 +498,202 @@ class ScriptManagerApp {
       }
     });
 
+    // 心跳监控测试相关IPC
+    ipcMain.handle('trigger-heartbeat-test', async () => {
+      try {
+        await this.taskScheduler.triggerHeartbeatTest();
+        return { success: true, message: '心跳检查已触发' };
+      } catch (error) {
+        console.error('触发心跳检查失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('simulate-failure', async (event, failureType) => {
+      try {
+        await this.taskScheduler.simulateFailure(failureType);
+        return { success: true, message: `已模拟 ${failureType} 故障` };
+      } catch (error) {
+        console.error('模拟故障失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('reset-simulation', async () => {
+      try {
+        this.taskScheduler.resetSimulation();
+        return { success: true, message: '已重置所有模拟故障' };
+      } catch (error) {
+        console.error('重置模拟故障失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('get-heartbeat-status', async () => {
+      try {
+        const status = this.taskScheduler.getHeartbeatStatus();
+        return { success: true, status };
+      } catch (error) {
+        console.error('获取心跳状态失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 测试系统通知
+    ipcMain.handle('test-system-notification', async () => {
+      try {
+        const { Notification } = require('electron');
+
+        // 检查通知支持和权限
+        const supported = Notification.isSupported();
+        let permission = 'unknown';
+
+        if (supported) {
+          // 通过heartbeatMonitor获取notificationManager
+          const notificationManager = this.taskScheduler.heartbeatMonitor.notificationManager;
+          const result = await notificationManager.sendSystemNotification(
+            '通知测试',
+            '这是一个测试通知，如果您看到这条消息，说明系统通知功能正常工作！',
+            'INFO'
+          );
+
+          return {
+            success: result,
+            supported,
+            permission,
+            platform: process.platform,
+            electronVersion: process.versions.electron
+          };
+        } else {
+          return {
+            success: false,
+            error: '系统不支持通知功能',
+            supported: false,
+            platform: process.platform,
+            electronVersion: process.versions.electron
+          };
+        }
+      } catch (error) {
+        console.error('测试系统通知失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 测试托盘通知
+    ipcMain.handle('test-tray-notification', async () => {
+      try {
+        if (!this.tray) {
+          return { success: false, error: '托盘不可用' };
+        }
+
+        // 通过heartbeatMonitor获取notificationManager
+        const notificationManager = this.taskScheduler.heartbeatMonitor.notificationManager;
+        const result = await notificationManager.sendTrayNotification(
+          '托盘通知测试',
+          '这是一个托盘通知测试，请检查系统托盘区域！',
+          'INFO'
+        );
+
+        return { success: result };
+      } catch (error) {
+        console.error('测试托盘通知失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 检查通知权限
+    ipcMain.handle('check-notification-permission', async () => {
+      try {
+        const { Notification } = require('electron');
+
+        const supported = Notification.isSupported();
+        let permission = 'unknown';
+
+        // 在某些平台上可能有权限API
+        if (typeof Notification.requestPermission === 'function') {
+          permission = await Notification.requestPermission();
+        }
+
+        return {
+          success: true,
+          supported,
+          permission,
+          platform: process.platform,
+          electronVersion: process.versions.electron,
+          nodeVersion: process.versions.node
+        };
+      } catch (error) {
+        console.error('检查通知权限失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 测试紧急通知
+    ipcMain.handle('test-urgent-notification', async () => {
+      try {
+        const { Notification } = require('electron');
+
+        if (!Notification.isSupported()) {
+          return { success: false, error: '系统不支持通知功能' };
+        }
+
+        // 通过heartbeatMonitor获取notificationManager
+        const notificationManager = this.taskScheduler.heartbeatMonitor.notificationManager;
+
+        // 发送紧急通知
+        const result = await notificationManager.sendSystemNotification(
+          '🚨 紧急通知测试',
+          '这是一个高优先级的紧急通知！如果您看到这条消息，说明通知系统工作正常。请检查Windows通知设置以确保应用通知已启用。',
+          'ERROR',
+          {
+            urgency: 'critical',
+            silent: false,
+            timeoutType: 'never'
+          }
+        );
+
+        // 同时发送托盘通知
+        await notificationManager.sendTrayNotification(
+          '🚨 紧急通知测试',
+          '请检查系统通知区域！',
+          'ERROR'
+        );
+
+        return { success: result };
+      } catch (error) {
+        console.error('测试紧急通知失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 模拟心跳异常
+    ipcMain.handle('simulate-heartbeat-failure', async () => {
+      try {
+        // 获取心跳监控器
+        const heartbeatMonitor = this.taskScheduler.heartbeatMonitor;
+
+        // 模拟心跳异常
+        log.warn('HeartbeatMonitor: 模拟心跳异常 - 测试通知系统');
+
+        // 创建模拟的心跳异常错误
+        const simulatedError = new Error('模拟的心跳异常 - 用于测试通知系统');
+
+        // 设置连续失败次数为接近阈值，确保下次调用能触发恢复
+        const maxFailures = heartbeatMonitor.maxFailures;
+        heartbeatMonitor.consecutiveFailures = maxFailures - 1;
+
+        log.info(`HeartbeatMonitor: 设置连续失败次数为 ${heartbeatMonitor.consecutiveFailures}，阈值为 ${maxFailures}`);
+
+        // 调用心跳异常处理方法，这次调用将触发恢复和通知
+        heartbeatMonitor.onHeartbeatError(simulatedError);
+
+        return { success: true };
+      } catch (error) {
+        console.error('模拟心跳异常失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // 设置相关IPC
     ipcMain.handle('load-settings', async () => {
       try {
@@ -507,6 +731,76 @@ class ScriptManagerApp {
         console.error('打开外部链接失败:', error);
         return { success: false, error: error.message };
       }
+    });
+
+    // 打开测试控制台
+    ipcMain.handle('open-test-console', async () => {
+      try {
+        this.createTestConsoleWindow();
+        return { success: true };
+      } catch (error) {
+        console.error('打开测试控制台失败:', error);
+        return { success: false, error: error.message };
+      }
+    });
+  }
+
+  createTestConsoleWindow() {
+    // 如果测试控制台窗口已存在，直接显示
+    if (this.testConsoleWindow && !this.testConsoleWindow.isDestroyed()) {
+      this.testConsoleWindow.show();
+      this.testConsoleWindow.focus();
+      return;
+    }
+
+    // 创建测试控制台窗口
+    this.testConsoleWindow = new BrowserWindow({
+      width: 900,
+      height: 700,
+      minWidth: 600,
+      minHeight: 500,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+        webSecurity: true,
+        enableRemoteModule: false,
+        allowRunningInsecureContent: false,
+        experimentalFeatures: false,
+        backgroundThrottling: false,
+        offscreen: false,
+        sandbox: false,
+        spellcheck: false
+      },
+      title: '心跳监控测试控制台',
+      show: false,
+      autoHideMenuBar: true,
+      icon: path.join(__dirname, 'assets/icon.png'),
+      frame: true,
+      resizable: true,
+      maximizable: true,
+      minimizable: true,
+      closable: true,
+      parent: this.mainWindow, // 设置为主窗口的子窗口
+      modal: false
+    });
+
+    // 加载测试控制台页面
+    this.testConsoleWindow.loadFile('app/renderer/test-console.html');
+
+    // 窗口准备好后显示
+    this.testConsoleWindow.once('ready-to-show', () => {
+      this.testConsoleWindow.show();
+    });
+
+    // 开发模式下打开开发者工具
+    if (process.argv.includes('--dev')) {
+      this.testConsoleWindow.webContents.openDevTools();
+    }
+
+    // 处理窗口关闭事件
+    this.testConsoleWindow.on('closed', () => {
+      this.testConsoleWindow = null;
     });
   }
 

@@ -36,8 +36,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   getSetting: (key) => ipcRenderer.invoke('get-setting', key),
 
+  // 心跳监控测试API
+  getHeartbeatStatus: () => ipcRenderer.invoke('get-heartbeat-status'),
+  triggerHeartbeatTest: () => ipcRenderer.invoke('trigger-heartbeat-test'),
+  simulateFailure: (failureType) => ipcRenderer.invoke('simulate-failure', failureType),
+  resetSimulation: () => ipcRenderer.invoke('reset-simulation'),
+
   // 工具函数
   platform: process.platform,
   version: process.versions.electron,
-  openExternal: (url) => ipcRenderer.invoke('open-external', url)
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  openTestConsole: () => ipcRenderer.invoke('open-test-console'),
+
+  // 通用invoke方法（用于测试控制台）
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args)
 });
